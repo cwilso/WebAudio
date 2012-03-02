@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Web Audio Playground</title>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link rel="shortcut icon" href="Speaker.ico">
+
+<!-- Visual design for nodes in the page -->
+<link rel="stylesheet" href="nodes.css" type="text/css">
+
+<!-- Script functions for dragging nodes around the page and connecting -->
+<script type="text/javascript" src="dragging.js"></script>
+
+
+<script type="text/javascript">
+var audioContext = null;
+
+var tempx=100, tempy=100;
+
+function createNewNode( nodeType, input, output ) {
+	var e=document.createElement("div");
+	e.className="node " + nodeType;
+	e.style.left="" + tempx + "px";
+	if (tempx > 500)
+		tempx = 100;
+		else
+		tempx += 50;
+	e.style.top="" + tempy + "px";
+	if (tempy > 1000)
+		tempy = 100;
+		else
+		tempy += 50;
+	e.setAttribute("audioNodeType", nodeType );
+	e.onmousedown=startDraggingNode;
+	e.appendChild(document.createTextNode(nodeType));
+	
+	if (input) {
+		var i=document.createElement("div");
+		i.className="inputconnector";
+		i.onmousedown=startDraggingConnector;
+		e.appendChild(i);
+	}
+	
+	if (output) {
+		var i=document.createElement("div");
+		i.className="outputconnector";
+		i.onmousedown=startDraggingConnector;
+		e.appendChild(i);
+	}
+	
+	// add the node into the soundfield
+	document.getElementById("soundField").appendChild(e);
+	return(e);
+}
+
+function hitplay(e) {
+  	e = e.target.parentNode;
+	if (e.bufferSource)
+		e.bufferSource.noteOff(0);
+	e.bufferSource = audioContext.createBufferSource();
+	e.bufferSource.loop = e.getElementsByTagName("input")[0].checked;   
+  	e.bufferSource.connect( audioContext.destination );
+  	e.bufferSource.buffer = e.buffer;
+	e.bufferSource.noteOn(0);
+}
+
+function hitstop(e) {
+	e.target.parentNode.bufferSource.noteOff(0);
+}
+
+function flipLoop(e) {
+	e.target.checked = !e.target.checked;
+	if (e.target.parentNode.bufferSource)
+		e.target.parentNode.bufferSource.loop = e.target.checked;
+}
+
+function createAudioNodeFromBuffer( buffer ) {
+	var e=createNewNode("audioBufferSource", false, true );
+
+	e.buffer=buffer;
+	
+	var ctl=document.createElement("button");
+	ctl.appendChild(document.createTextNode("play"));
+	ctl.onclick = hitplay;
+	e.appendChild(ctl);
+
+	ctl=document.createElement("button");
+	ctl.appendChild(document.createTextNode("stop"));
+	ctl.onclick = hitstop;
+	e.appendChild(ctl);
+
+	ctl=document.createElement("input");
+	ctl.type="checkbox";
+	ctl.name="loop";
+	ctl.value="loop";
+	ctl.addEventListener( "onclick", flipLoop );
+	e.appendChild(ctl);
+	e.appendChild(document.createTextNode("loop"));
+
+}
+
+function downloadAudioFromURL( url ){
+	var request = new XMLHttpRequest();
+  	request.open('GET', url, true);
+  	request.responseType = 'arraybuffer';
+
+  	// Decode asynchronously
+  	request.onload = function() {
+    	audioContext.decodeAudioData( request.response, function(buffer) {
+      		createAudioNodeFromBuffer(buffer);
+    	}, function(){alert("error loading!");});
+  	}
+  	request.send();
+}
+
+// Set up the page as a drop site for audio files. When an audio file is
+// dropped on the page, it will be auto-loaded as an AudioBufferSourceNode.
+function initDragDropOfAudioFiles() {
+	window.ondragover = function () { this.className = 'hover'; return false; };
+	window.ondragend = function () { this.className = ''; return false; };
+	window.ondrop = function (e) {
+  		this.className = '';
+  		e.preventDefault();
+
+	  var reader = new FileReader();
+	  reader.onload = function (event) {
+	  	audioContext.decodeAudioData( event.target.result, function(buffer) {
+	    		createAudioNodeFromBuffer(buffer);
+	  	}, function(){alert("error loading!");} ); 
+
+	  };
+	  reader.onerror = function (event) {
+	    alert("Error: " + reader.error );
+	  };
+	  reader.readAsArrayBuffer(e.dataTransfer.files[0]);
+	  return false;
+	};	
+}
+
+// Initialization function for the page.
+function init() {
+  	try {
+    	audioContext = new webkitAudioContext();
+  	}
+  	catch(e) {
+    	alert('Web Audio API is not supported in this browser');
+  	}
+
+	initDragDropOfAudioFiles();	// set up page as a drop site for audio files
+
+	// create the one-and-only destination node for the context
+	var dest = createNewNode("destination", true, false );
+	dest.style.backgroundImage = "url(Speaker_Icon_gray.svg)";
+	dest.style.backgroundSize = "contain";
+}
+
+window.addEventListener('load', init, false);
+
+</script>
+<style>
+
+</style>
+</head>
+
+<body>
+<div id="soundField">
+<div>Drop a sound file onto the page in order to create an AudioBufferSource with that file</div>
+<button onclick="downloadAudioFromURL('440Hz.mp3'); ">Sine Wave AudioBufferSource</button>
+<button onclick="var uri=prompt('Enter a URL to a sound file'); if (uri) downloadAudioFromURL(uri); ">AudioBufferSource from URL</button>
+
+</div>
+
+</body>
+</html>
