@@ -74,12 +74,16 @@ function startDraggingConnector(event) {
   	dragObj.cursorStartX = x;
   	dragObj.cursorStartY = y;
 
+	// remember if this is an input or output node, so we can match
+	dragObj.input = (dragObj.elNode.className.indexOf("inputconnector") != -1);
+	
 	// Create a connector visual node
 
   	// Capture mousemove and mouseup events on the page.
     document.addEventListener("mousemove", whileDraggingConnector,   true);
     document.addEventListener("mouseup",   stopDraggingConnector, 	true);
     event.preventDefault();
+	event.stopPropagation();
 }
 
 function whileDraggingConnector(event) {
@@ -90,8 +94,25 @@ function whileDraggingConnector(event) {
 
 	// Move connector visual node
 	// light up connector point underneath, if any
-
+	if (dragObj.input) {
+		if (event.toElement.className.indexOf("outputconnector") != -1) {
+			// can connect!
+		}
+	} else {	// first node was an output, so we're looking for an input
+		if (event.toElement.className.indexOf("inputconnector") != -1) {
+			// can connect!
+		}
+	}
+	
     event.preventDefault();
+	event.stopPropagation();
+}
+
+function connectNodes( src, dst ) {
+	src.parentNode.dstNode = dst.parentNode;
+	dst.parentNode.srcNode = src.parentNode;
+	src.className += " connected";
+	dst.className += " connected";
 }
 
 function stopDraggingConnector(event) {
@@ -99,6 +120,19 @@ function stopDraggingConnector(event) {
     document.removeEventListener("mousemove", whileDraggingConnector,   true);
     document.removeEventListener("mouseup",   stopDraggingConnector, true);
 
+	var to = event.toElement;
+	
 	// If we're over a connection point, make the connection
+	if (dragObj.input) {
+		if (to.className.indexOf("outputconnector") != -1) {
+			// can connect!
+			connectNodes(to, dragObj.elNode);
+		}
+	} else {	// first node was an output, so we're looking for an input
+		if (to.className.indexOf("inputconnector") != -1) {
+			// can connect!
+			connectNodes(dragObj.elNode, to);
+		}
+	}
 	// Otherwise, delete the connector
 }

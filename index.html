@@ -54,12 +54,20 @@ function createNewNode( nodeType, input, output ) {
 }
 
 function hitplay(e) {
-  	e = e.target.parentNode;
+  	e = e.target.parentNode; // the node element, not the play button.
+
+	// if there's already a note playing, cut it off.
 	if (e.bufferSource)
 		e.bufferSource.noteOff(0);
+	
+	// create a new BufferSource, set it to the buffer and connect it.
 	e.bufferSource = audioContext.createBufferSource();
-	e.bufferSource.loop = e.getElementsByTagName("input")[0].checked;   
-  	e.bufferSource.connect( audioContext.destination );
+	e.bufferSource.loop = e.getElementsByTagName("input")[0].checked;
+	
+//  	e.bufferSource.connect( audioContext.destination );
+	if (e.dstNode)
+		e.bufferSource.connect( e.dstNode.nodePoint );
+
   	e.bufferSource.buffer = e.buffer;
 	e.bufferSource.noteOn(0);
 }
@@ -95,7 +103,7 @@ function createAudioNodeFromBuffer( buffer ) {
 	ctl.value="loop";
 	ctl.addEventListener( "onclick", flipLoop );
 	e.appendChild(ctl);
-	e.appendChild(document.createTextNode("loop"));
+	e.appendChild(document.createTextNode("loop  "));
 
 }
 
@@ -152,6 +160,7 @@ function init() {
 	var dest = createNewNode("destination", true, false );
 	dest.style.backgroundImage = "url(Speaker_Icon_gray.svg)";
 	dest.style.backgroundSize = "contain";
+	dest.nodePoint = audioContext.destination;
 }
 
 window.addEventListener('load', init, false);
@@ -165,7 +174,7 @@ window.addEventListener('load', init, false);
 <body>
 <div id="soundField">
 <div>Drop a sound file onto the page in order to create an AudioBufferSource with that file</div>
-<button onclick="downloadAudioFromURL('440Hz.mp3'); ">Sine Wave AudioBufferSource</button>
+<button onclick="downloadAudioFromURL('440Hz.ogg'); ">Sine Wave AudioBufferSource</button>
 <button onclick="var uri=prompt('Enter a URL to a sound file'); if (uri) downloadAudioFromURL(uri); ">AudioBufferSource from URL</button>
 
 </div>

@@ -20,6 +20,8 @@
 		background: gray;
 }
 
+.inputconnector.connected, .outputconnector.connected { background: blue }
+
 .outputconnector {
 		position: absolute;
 		right:-12px; top:75px;
