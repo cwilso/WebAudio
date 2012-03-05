@@ -30,3 +30,7 @@
 		border-radius: 10px;
 		background: gray;
 }
+
+.dialcontrol {
+	position: absolute;
+}
