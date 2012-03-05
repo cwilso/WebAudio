@@ -45,6 +45,9 @@ function whileDraggingNode(event) {
 	// Move drag element by the same amount the cursor has moved.
   	dragObj.elNode.style.left = (dragObj.elStartLeft + x - dragObj.cursorStartX) + "px";
   	dragObj.elNode.style.top  = (dragObj.elStartTop  + y - dragObj.cursorStartY) + "px";
+
+//TODO: update any connectors.
+
     event.preventDefault();
 }
 
@@ -67,8 +70,15 @@ function startDraggingConnector(event) {
     	dragObj.elNode = dragObj.elNode.parentNode;
 
 	// Get the position of the originating connector with respect to the page.
-    x = event.target.clientX + window.scrollX;
-    y = event.target.clientY + window.scrollY;
+	var off = event.target;
+    x = window.scrollX + 12;
+    y = window.scrollY + 12;
+
+	while (off) {
+		x+=off.offsetLeft;
+		y+=off.offsetTop;
+		off=off.offsetParent;
+	}
 
   	// Save starting positions of cursor and element.
   	dragObj.cursorStartX = x;
@@ -77,7 +87,19 @@ function startDraggingConnector(event) {
 	// remember if this is an input or output node, so we can match
 	dragObj.input = (dragObj.elNode.className.indexOf("inputconnector") != -1);
 	
-	// Create a connector visual node
+	// Create a connector visual line
+	var svgns = "http://www.w3.org/2000/svg";
+
+	var shape = document.createElementNS(svgns, "line");
+	shape.setAttributeNS(null, "x1", x);
+	shape.setAttributeNS(null, "y1", y);
+    shape.setAttributeNS(null, "x2", x);
+    shape.setAttributeNS(null, "y2", y);
+    shape.setAttributeNS(null, "stroke", "black");
+	shape.setAttributeNS(null, "stroke-width", "5");
+	dragObj.connectorShape=shape;
+
+    document.getElementById("svgCanvas").appendChild(shape);
 
   	// Capture mousemove and mouseup events on the page.
     document.addEventListener("mousemove", whileDraggingConnector,   true);
@@ -92,14 +114,19 @@ function whileDraggingConnector(event) {
     x = event.clientX + window.scrollX;
     y = event.clientY + window.scrollY;
 
+    dragObj.connectorShape.setAttributeNS(null, "x2", x);
+    dragObj.connectorShape.setAttributeNS(null, "y2", y);
+	
 	// Move connector visual node
 	// light up connector point underneath, if any
+	var str=""+event.toElement.className;
+	
 	if (dragObj.input) {
-		if (event.toElement.className.indexOf("outputconnector") != -1) {
+		if (str.indexOf("outputconnector") != -1) {
 			// can connect!
 		}
 	} else {	// first node was an output, so we're looking for an input
-		if (event.toElement.className.indexOf("inputconnector") != -1) {
+		if (str.indexOf("inputconnector") != -1) {
 			// can connect!
 		}
 	}
@@ -109,9 +136,15 @@ function whileDraggingConnector(event) {
 }
 
 function connectNodes( src, dst ) {
+	//TODO: store the connector line shape here
+	
 	src.parentNode.dstNode = dst.parentNode;
 	dst.parentNode.srcNode = src.parentNode;
+	if (src.parentNode.audioNode )
+		src.parentNode.audioNode.connect(dst.parentNode.audioNode);
 	src.className += " connected";
+	src.connectorShape = dragObj.connectorShape;
+	dragObj.connectorShape = null;
 	dst.className += " connected";
 }
 
@@ -121,18 +154,39 @@ function stopDraggingConnector(event) {
     document.removeEventListener("mouseup",   stopDraggingConnector, true);
 
 	var to = event.toElement;
+
+	// Get the position of the originating connector with respect to the page.
+	var off = to;
+	x = window.scrollX + 12;
+	y = window.scrollY + 12;
+
+	while (off) {
+		x+=off.offsetLeft;
+		y+=off.offsetTop;
+		off=off.offsetParent;
+	}
+	dragObj.connectorShape.setAttributeNS(null, "x2", x);
+    dragObj.connectorShape.setAttributeNS(null, "y2", y);
+
+	var str=""+to.className;
 	
 	// If we're over a connection point, make the connection
 	if (dragObj.input) {
-		if (to.className.indexOf("outputconnector") != -1) {
+		if (str.indexOf("outputconnector") != -1) {
 			// can connect!
 			connectNodes(to, dragObj.elNode);
+			return;
 		}
+
 	} else {	// first node was an output, so we're looking for an input
-		if (to.className.indexOf("inputconnector") != -1) {
+		if (str.indexOf("inputconnector") != -1) {
 			// can connect!
 			connectNodes(dragObj.elNode, to);
+			return;
 		}
 	}
+
 	// Otherwise, delete the connector
+	dragObj.connectorShape.parentNode.removeChild(dragObj.connectorShape);
+	dragObj.connectorShape = null;
 }
