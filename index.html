@@ -90,8 +90,9 @@ function onUpdateQ(e) {
 	var i = parseFloat(e.getAttribute("val"));	// in range 0.0 - 100.0
 	var range = param.maxValue - param.minValue;
 	param.value = ((i * range) / 100) + param.minValue;
-//	console.log( param.value + "\n");
+	//	console.log( e.parentNode.audioNode.frequency.value + "Hz Q=" + e.parentNode.audioNode.Q.value + "\n");
 }
+
 function onUpdateFrequency(e) {
 	var param = e.parentNode.audioNode.frequency;
 	
@@ -100,11 +101,13 @@ function onUpdateFrequency(e) {
 	param.value = ((i * range) / 100) + param.minValue;
 //	console.log( e.parentNode.audioNode.frequency.value + "Hz Q=" + e.parentNode.audioNode.Q.value + "\n");
 }
+
 function initDefaultParam(param) {
 	var range = param.maxValue - param.minValue;
 	param.value = param.defaultValue;
 	return ((param.value - param.minValue) * 100) / range;
 }
+
 function createBiquadFilterNode() {
 	var e=createNewNode("biquadFilter", true, true );
 	var filter = audioContext.createBiquadFilter();
