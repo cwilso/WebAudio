@@ -62,14 +62,18 @@ function hitplay(e) {
 	// if there's already a note playing, cut it off.
 	if (e.audioNode)
 		e.audioNode.noteOff(0);
+		
+	//TODO: disconnect the audioNode before releasing it
 	
 	// create a new BufferSource, set it to the buffer and connect it.
-	e.audioNode = audioContext.createBufferSource();
-	e.audioNode.loop = e.getElementsByTagName("input")[0].checked;
-	e.audioNode.gain.value = e.gain;
+	var n = e.audioNode = audioContext.createBufferSource();
+	n.loop = e.getElementsByTagName("input")[0].checked;
+	n.gain.value = e.gain;
 	
-	if (e.dstNode)
-		e.audioNode.connect( e.dstNode.audioNode );
+	if (e.outputConnections) {
+		e.outputConnections.forEach(function(connection){  
+		                      n.connect( connection.destination.audioNode ); });
+	}
 
   	e.audioNode.buffer = e.buffer;
 	e.audioNode.noteOn(0);

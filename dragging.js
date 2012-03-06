@@ -135,17 +135,39 @@ function whileDraggingConnector(event) {
 	event.stopPropagation();
 }
 
+// Make a connection between two connection point elements.
+// the src and dst params are connection point elems, NOT
+// the node elems themselves.
 function connectNodes( src, dst ) {
-	//TODO: store the connector line shape here
-	
-	src.parentNode.dstNode = dst.parentNode;
-	dst.parentNode.srcNode = src.parentNode;
-	if (src.parentNode.audioNode )
-		src.parentNode.audioNode.connect(dst.parentNode.audioNode);
 	src.className += " connected";
-	src.connectorShape = dragObj.connectorShape;
-	dragObj.connectorShape = null;
 	dst.className += " connected";
+
+	// We want to be dealing with the audio node elements from here on
+	src = src.parentNode;
+	dst = dst.parentNode;
+	
+	// Put an entry into the source's outputs
+	if (!src.outputConnections)
+		src.outputConnections = new Array();
+	var connector = new Object();
+	connector.line = dragObj.connectorShape;
+	connector.destination = dst;
+	src.outputConnections.push(connector);
+	
+	// Put an entry into the destinations's inputs
+	if (!dst.inputConnections)
+		dst.inputConnections = new Array();
+	connector = new Object();
+	connector.line = dragObj.connectorShape;
+	connector.source = src;
+	dst.inputConnections.push(connector);
+	
+	// if the source has an audio node, connect them up.  
+	// AudioBufferSourceNodes may not have an audio node yet.
+	if (src.audioNode )
+		src.audioNode.connect(dst.audioNode);
+
+	dragObj.connectorShape = null;
 }
 
 function stopDraggingConnector(event) {
