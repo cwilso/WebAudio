@@ -47,6 +47,8 @@ function whileDraggingNode(event) {
   	dragObj.elNode.style.top  = (dragObj.elStartTop  + y - dragObj.cursorStartY) + "px";
 
 //TODO: update any connectors.
+// if inputnode::
+// if outputnode::
 
     event.preventDefault();
 }
@@ -123,11 +125,11 @@ function whileDraggingConnector(event) {
 	
 	if (dragObj.input) {
 		if (str.indexOf("outputconnector") != -1) {
-			// can connect!
+			// TODO: light up - can connect!
 		}
 	} else {	// first node was an output, so we're looking for an input
 		if (str.indexOf("inputconnector") != -1) {
-			// can connect!
+			// TODO: light up - can connect!
 		}
 	}
 	
@@ -203,6 +205,8 @@ function stopDraggingConnector(event) {
 	} else {	// first node was an output, so we're looking for an input
 		if (str.indexOf("inputconnector") != -1) {
 			// can connect!
+			// TODO: first: swap the line endpoints so they're consistently x1->x2
+			// That makes updating them when we drag nodes around easier.
 			connectNodes(dragObj.elNode, to);
 			return;
 		}
