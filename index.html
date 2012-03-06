@@ -154,6 +154,30 @@ function createAudioNodeFromBuffer( buffer ) {
 
 }
 
+function flipNormalize(e) {
+	e.target.checked = !e.target.checked;
+	if (e.target.parentNode.audioNode)
+		e.target.parentNode.audioNode.normalize = e.target.checked;
+}
+
+function createConvolverNodeFromBuffer( buffer ) {
+	var e=createNewNode("convolverNode", true, true );
+	var convolver = audioContext.createConvolver();
+	
+	e.audioNode = convolver;
+	e.buffer=buffer;
+	convolver.buffer = buffer;
+	
+	ctl=document.createElement("input");
+	ctl.type="checkbox";
+	ctl.name="normalize";
+	ctl.value="normalize";
+	ctl.addEventListener( "onclick", flipNormalize );
+	e.appendChild(document.createElement("br"));
+	e.appendChild(ctl);
+	e.appendChild(document.createTextNode("normalize"));
+}
+
 function downloadAudioFromURL( url ){
 	var request = new XMLHttpRequest();
   	request.open('GET', url, true);
@@ -163,6 +187,20 @@ function downloadAudioFromURL( url ){
   	request.onload = function() {
     	audioContext.decodeAudioData( request.response, function(buffer) {
       		createAudioNodeFromBuffer(buffer);
+    	}, function(){alert("error loading!");});
+  	}
+  	request.send();
+}
+
+function downloadImpulseFromURL( url ){
+	var request = new XMLHttpRequest();
+  	request.open('GET', url, true);
+  	request.responseType = 'arraybuffer';
+
+  	// Decode asynchronously
+  	request.onload = function() {
+    	audioContext.decodeAudioData( request.response, function(buffer) {
+      		createConvolverNodeFromBuffer(buffer);
     	}, function(){alert("error loading!");});
   	}
   	request.send();
@@ -223,7 +261,10 @@ window.addEventListener('load', init, false);
 <div>Drop a sound file onto the page in order to create an AudioBufferSource with that file</div>
 <button onclick="downloadAudioFromURL('440Hz.ogg'); ">Sine Wave AudioBufferSource</button>
 <button onclick="createBiquadFilterNode();">Biquad Filter</button>
+<button onclick="downloadImpulseFromURL('hall.ogg'); ">Hall Impulse ConvolutionNode</button>
+
 <button onclick="var uri=prompt('Enter a URL to a sound file'); if (uri) downloadAudioFromURL(uri); ">AudioBufferSource from URL</button>
+<button onclick="var uri=prompt('Enter a URL to an impulse file'); if (uri) downloadImpulseFromURL(uri); ">Convolver from impulse file URL</button>
 
 </div>
 <!-- SVG canvas is just for drawing the connector lines -->
