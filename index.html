@@ -66,6 +66,7 @@ function hitplay(e) {
 	// create a new BufferSource, set it to the buffer and connect it.
 	e.audioNode = audioContext.createBufferSource();
 	e.audioNode.loop = e.getElementsByTagName("input")[0].checked;
+	e.audioNode.gain.value = e.gain;
 	
 	if (e.dstNode)
 		e.audioNode.connect( e.dstNode.audioNode );
@@ -100,6 +101,16 @@ function onUpdateFrequency(e) {
 	var range = param.maxValue - param.minValue;
 	param.value = ((i * range) / 100) + param.minValue;
 //	console.log( e.parentNode.audioNode.frequency.value + "Hz Q=" + e.parentNode.audioNode.Q.value + "\n");
+}
+
+function onUpdateABSNGain(e) {
+	var i = parseFloat(e.getAttribute("val"));	// in range 0.0 - 100.0
+	var node = e.parentNode;
+	node.gain = i / 100;
+	if (node.audioNode) {
+		node.audioNode.gain.value = i / 100;
+	}
+//	console.log( e.parentNode.audioNode.gain.value + "\n");
 }
 
 function initDefaultParam(param) {
@@ -151,6 +162,14 @@ function createAudioNodeFromBuffer( buffer ) {
 	ctl.addEventListener( "onclick", flipLoop );
 	e.appendChild(ctl);
 	e.appendChild(document.createTextNode("loop  "));
+
+	e.gain = 1.0;
+	var ctl = createNewDialControl( 100, 100 );
+	ctl.style.left = "25px";
+	ctl.style.top = "50px";
+	ctl.onUpdateDial = onUpdateABSNGain;
+	e.appendChild( ctl );
+
 
 }
 
