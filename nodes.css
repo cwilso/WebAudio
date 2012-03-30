@@ -20,7 +20,8 @@
 		background: gray;
 }
 
-.inputconnector.connected, .outputconnector.connected { background: blue }
+.inputconnector.connected, .outputconnector.connected { background: lightgreen }
+.inputconnector.canConnect, .outputconnector.canConnect { background: pink }
 
 .outputconnector {
 		position: absolute;

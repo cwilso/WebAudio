@@ -14,6 +14,9 @@
 <!-- Dial Control library -->
 <script type="text/javascript" src="DialControl.js"></script>
 
+<!-- Analyser Node library -->
+<script type="text/javascript" src="analyser.js"></script>
+
 
 <script type="text/javascript">
 var audioContext = null;
@@ -42,6 +45,7 @@ function createNewNode( nodeType, input, output ) {
 		i.className="inputconnector";
 		i.onmousedown=startDraggingConnector;
 		e.appendChild(i);
+		e.inputs = i;
 	}
 	
 	if (output) {
@@ -49,6 +53,7 @@ function createNewNode( nodeType, input, output ) {
 		i.className="outputconnector";
 		i.onmousedown=startDraggingConnector;
 		e.appendChild(i);
+		e.outputs = i;
 	}
 	
 	// add the node into the soundfield
@@ -128,7 +133,6 @@ function createBiquadFilterNode() {
 	var filter = audioContext.createBiquadFilter();
 	e.audioNode = filter;
 	filter.type=0;
-//	filter.frequency.value = 440.0;
 
 	var ctl = createNewDialControl( 50, initDefaultParam(filter.Q) );
 	ctl.style.left = "10px";
@@ -143,6 +147,38 @@ function createBiquadFilterNode() {
 	e.appendChild( ctl );
 
 }
+
+function onAnalyserConnectInput() {
+	// set up 
+	if (!animationRunning) {
+		animationRunning = true;
+		updateAnalysers( 0 );
+	}
+}
+
+function createAnalyserNode() {
+	var e=createNewNode("analyser", true, true );
+	var analyser = audioContext.createAnalyser();
+	analyser.smoothingTimeConstant = "0.25"; // not much smoothing
+	e.audioNode = analyser;
+	var canvas = document.createElement( "canvas" );
+	canvas.style.left = "10px";
+	canvas.style.top = "35px";
+	canvas.style.position = "absolute";
+	canvas.height = "120";
+	canvas.width = "150";
+	canvas.className = "analyserCanvas"
+	canvas.style.webkitBoxReflect = "below 0px -webkit-gradient(linear, left top, left bottom, from(transparent), color-stop(0.9, transparent), to(white))"
+	
+	e.appendChild( canvas );
+	
+	e.onConnectInput = onAnalyserConnectInput;
+	analysers.push(e);	// Add to the list of analysers in the animation loop
+	e.drawingContext = canvas.getContext('2d');
+//	e.drawingContext.fillStyle = "blue";
+//	e.drawingContext.fillRect(0,0,150, 120);
+}
+
 
 function createAudioNodeFromBuffer( buffer ) {
 	var e=createNewNode("audioBufferSource", false, true );
@@ -284,6 +320,7 @@ window.addEventListener('load', init, false);
 <div>Drop a sound file onto the page in order to create an AudioBufferSource with that file</div>
 <button onclick="downloadAudioFromURL('440Hz.ogg'); ">Sine Wave AudioBufferSource</button>
 <button onclick="createBiquadFilterNode();">Biquad Filter</button>
+<button onclick="createAnalyserNode();">Spectrum Analyser</button>
 <button onclick="downloadImpulseFromURL('hall.ogg'); ">Hall Impulse ConvolutionNode</button>
 
 <button onclick="var uri=prompt('Enter a URL to a sound file'); if (uri) downloadAudioFromURL(uri); ">AudioBufferSource from URL</button>

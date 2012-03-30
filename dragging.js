@@ -1,5 +1,6 @@
 var dragObj = new Object();
 dragObj.zIndex = 0;
+dragObj.lastLit = null;
 
 // Node Dragging functions - these are used for dragging the audio nodes, 
 // like Destination or AudioSourceBuffer.
@@ -11,7 +12,7 @@ function startDraggingNode(event) {
     dragObj.elNode = event.target;
 
     // If this is a text node, use its parent element.
-    if (dragObj.elNode.nodeType == 3)
+    if ((dragObj.elNode.nodeType == 3)||(dragObj.elNode.className == "analyserCanvas"))
     	dragObj.elNode = dragObj.elNode.parentNode;
 
 	// Get cursor position with respect to the page.
@@ -38,20 +39,57 @@ function startDraggingNode(event) {
 
 function whileDraggingNode(event) {
 	var x, y;
+	var e = dragObj.elNode;
+
 	// Get cursor position with respect to the page.
     x = event.clientX + window.scrollX;
     y = event.clientY + window.scrollY;
 
 	// Move drag element by the same amount the cursor has moved.
-  	dragObj.elNode.style.left = (dragObj.elStartLeft + x - dragObj.cursorStartX) + "px";
-  	dragObj.elNode.style.top  = (dragObj.elStartTop  + y - dragObj.cursorStartY) + "px";
+  	e.style.left = (dragObj.elStartLeft + x - dragObj.cursorStartX) + "px";
+  	e.style.top  = (dragObj.elStartTop  + y - dragObj.cursorStartY) + "px";
 
-//TODO: update any connectors.
-// if inputnode::
-// if outputnode::
+	if (e.inputConnections) {	// update any lines that point in here.
+		var c;
+		
+		var off = e.inputs;
+	    x = window.scrollX + 12;
+	    y = window.scrollY + 12;
+
+		while (off) {
+			x+=off.offsetLeft;
+			y+=off.offsetTop;
+			off=off.offsetParent;
+		}
+		
+		for (c=0; c<e.inputConnections.length; c++) {
+			e.inputConnections[c].line.setAttributeNS(null, "x1", x);
+			e.inputConnections[c].line.setAttributeNS(null, "y1", y);
+		}
+	}
+
+	if (e.outputConnections) {	// update any lines that point out of here.
+		var c;
+		
+		var off = e.outputs;
+	    x = window.scrollX + 12;
+	    y = window.scrollY + 12;
+
+		while (off) {
+			x+=off.offsetLeft;
+			y+=off.offsetTop;
+			off=off.offsetParent;
+		}
+		
+		for (c=0; c<e.outputConnections.length; c++) {
+			e.outputConnections[c].line.setAttributeNS(null, "x2", x);
+			e.outputConnections[c].line.setAttributeNS(null, "y2", y);
+		}
+	}
 
     event.preventDefault();
 }
+
 
 function stopDraggingNode(event) {
   // Stop capturing mousemove and mouseup events.
@@ -88,6 +126,9 @@ function startDraggingConnector(event) {
 
 	// remember if this is an input or output node, so we can match
 	dragObj.input = (dragObj.elNode.className.indexOf("inputconnector") != -1);
+
+	dragObj.elNode.unlitClassname = dragObj.elNode.className;
+	dragObj.elNode.className += " canConnect";
 	
 	// Create a connector visual line
 	var svgns = "http://www.w3.org/2000/svg";
@@ -112,6 +153,8 @@ function startDraggingConnector(event) {
 
 function whileDraggingConnector(event) {
 	var x, y;
+	var toElem = event.toElement;
+	
 	// Get cursor position with respect to the page.
     x = event.clientX + window.scrollX;
     y = event.clientY + window.scrollY;
@@ -121,15 +164,26 @@ function whileDraggingConnector(event) {
 	
 	// Move connector visual node
 	// light up connector point underneath, if any
-	var str=""+event.toElement.className;
+	var str = "" + toElem.className;
 	
-	if (dragObj.input) {
-		if (str.indexOf("outputconnector") != -1) {
-			// TODO: light up - can connect!
-		}
-	} else {	// first node was an output, so we're looking for an input
-		if (str.indexOf("inputconnector") != -1) {
-			// TODO: light up - can connect!
+	if (dragObj.lastLit && (dragObj.lastLit != toElem ) ) {
+		dragObj.lastLit.className = dragObj.lastLit.unlitClassname;
+		dragObj.lastLit = null;
+	}
+	
+	if (!dragObj.lastLit || (dragObj.lastLit != toElem )) {
+		if (dragObj.input) {
+			if (str.indexOf("outputconnector") != -1) {
+				toElem.unlitClassname = toElem.className;
+				toElem.className += " canConnect";
+				dragObj.lastLit = toElem;
+			}
+		} else {	// first node was an output, so we're looking for an input
+			if (str.indexOf("inputconnector") != -1) {
+				toElem.unlitClassname = toElem.className;
+				toElem.className += " canConnect";
+				dragObj.lastLit = toElem;
+			}
 		}
 	}
 	
@@ -156,6 +210,16 @@ function connectNodes( src, dst ) {
 	connector.destination = dst;
 	src.outputConnections.push(connector);
 	
+	//Make sure the connector line points go from src->dest (x1->x2)
+	if (!dragObj.input) { // need to flip
+		var shape = dragObj.connectorShape;
+		var x = shape.getAttributeNS(null, "x2");
+		var y = shape.getAttributeNS(null, "y2");
+	    shape.setAttributeNS(null, "x2", shape.getAttributeNS(null, "x1"));
+	    shape.setAttributeNS(null, "y2", shape.getAttributeNS(null, "y1"));
+		shape.setAttributeNS(null, "x1", x);
+		shape.setAttributeNS(null, "y1", y);
+	}
 	// Put an entry into the destinations's inputs
 	if (!dst.inputConnections)
 		dst.inputConnections = new Array();
@@ -169,6 +233,8 @@ function connectNodes( src, dst ) {
 	if (src.audioNode )
 		src.audioNode.connect(dst.audioNode);
 
+	if (dst.onConnectInput)
+		dst.onConnectInput();
 	dragObj.connectorShape = null;
 }
 
@@ -177,6 +243,13 @@ function stopDraggingConnector(event) {
     document.removeEventListener("mousemove", whileDraggingConnector,   true);
     document.removeEventListener("mouseup",   stopDraggingConnector, true);
 
+	if (dragObj.lastLit) {
+		dragObj.lastLit.className = dragObj.lastLit.unlitClassname;
+		dragObj.lastLit = null;
+	}
+
+	dragObj.elNode.className = dragObj.elNode.unlitClassname;
+	
 	var to = event.toElement;
 
 	// Get the position of the originating connector with respect to the page.
