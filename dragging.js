@@ -9,6 +9,9 @@ function startDraggingNode(event) {
  	var el;
   	var x, y;
 
+	if (event.target.tagName == "SELECT")
+		return;
+		
     dragObj.elNode = event.target;
 
     // If this is a text node, use its parent element.

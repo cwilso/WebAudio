@@ -122,6 +122,11 @@ function onUpdateABSNGain(e) {
 //	console.log( e.parentNode.audioNode.gain.value + "\n");
 }
 
+function changeFilterType(e) {
+	if (e.target.parentNode.audioNode)
+		e.target.parentNode.audioNode.type = e.target.selectedIndex;
+}
+
 function initDefaultParam(param) {
 	var range = param.maxValue - param.minValue;
 	param.value = param.defaultValue;
@@ -134,15 +139,57 @@ function createBiquadFilterNode() {
 	e.audioNode = filter;
 	filter.type=0;
 
-	var ctl = createNewDialControl( 50, initDefaultParam(filter.Q) );
+	var ctl=document.createElement("select");
+	ctl.type="select";
+	ctl.value="type";
+	ctl.addEventListener( "change", changeFilterType );
+
+	var opt = document.createElement("option");
+	opt.setAttribute("value", "lowpass");
+	opt.appendChild(document.createTextNode("Low Pass"));
+	opt.setAttribute("selected");
+	ctl.appendChild(opt);
+	opt = document.createElement("option");
+	opt.setAttribute("value", "highpass");
+	opt.appendChild(document.createTextNode("High Pass"));
+	ctl.appendChild(opt);
+	opt = document.createElement("option");
+	opt.setAttribute("value", "bandpass");
+	opt.appendChild(document.createTextNode("Band Pass"));
+	ctl.appendChild(opt);
+	opt = document.createElement("option");
+	opt.setAttribute("value", "lowshelf");
+	opt.appendChild(document.createTextNode("Low Shelf"));
+	ctl.appendChild(opt);
+	opt = document.createElement("option");
+	opt.setAttribute("value", "highshelf");
+	opt.appendChild(document.createTextNode("High Shelf"));
+	ctl.appendChild(opt);
+	opt = document.createElement("option");
+	opt.setAttribute("value", "peaking");
+	opt.appendChild(document.createTextNode("Peaking"));
+	ctl.appendChild(opt);
+	opt = document.createElement("option");
+	opt.setAttribute("value", "notch");
+	opt.appendChild(document.createTextNode("Notch"));
+	ctl.appendChild(opt);
+	opt = document.createElement("option");
+	opt.setAttribute("value", "allpass");
+	opt.appendChild(document.createTextNode("All Pass"));
+	ctl.appendChild(opt);
+	
+	ctl.selectedIndex="0";
+	e.appendChild(ctl);
+
+	ctl = createNewDialControl( 50, initDefaultParam(filter.Q) );
 	ctl.style.left = "10px";
-	ctl.style.top = "20px";
+	ctl.style.top = "40px";
 	ctl.onUpdateDial = onUpdateQ;
 	e.appendChild( ctl );
 
 	ctl = createNewDialControl( 50, initDefaultParam(filter.frequency) );
 	ctl.style.left = "70px";
-	ctl.style.top = "20px";
+	ctl.style.top = "40px";
 	ctl.onUpdateDial = onUpdateFrequency;
 	e.appendChild( ctl );
 
