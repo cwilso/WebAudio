@@ -94,7 +94,7 @@ function flipLoop(e) {
 		e.target.parentNode.audioNode.loop = e.target.checked;
 }
 
-function onUpdateQ(e) {
+function onUpdateFilterQ(e) {
 	var param = e.parentNode.audioNode.Q;
 	
 	var i = parseFloat(e.getAttribute("val"));	// in range 0.0 - 100.0
@@ -103,13 +103,21 @@ function onUpdateQ(e) {
 	//	console.log( e.parentNode.audioNode.frequency.value + "Hz Q=" + e.parentNode.audioNode.Q.value + "\n");
 }
 
-function onUpdateFrequency(e) {
+function onUpdateFilterFrequency(e) {
 	var param = e.parentNode.audioNode.frequency;
 	
 	var i = parseFloat(e.getAttribute("val"));	// in range 0.0 - 100.0
 	var range = param.maxValue - param.minValue;
 	param.value = ((i * range) / 100) + param.minValue;
 //	console.log( e.parentNode.audioNode.frequency.value + "Hz Q=" + e.parentNode.audioNode.Q.value + "\n");
+}
+
+function onUpdateFilterGain(e) {
+	var param = e.parentNode.audioNode.gain;
+	
+	var i = parseFloat(e.getAttribute("val"));	// in range 0.0 - 100.0
+	var range = param.maxValue - param.minValue;
+	param.value = ((i * range) / 100) + param.minValue;
 }
 
 function onUpdateABSNGain(e) {
@@ -184,13 +192,19 @@ function createBiquadFilterNode() {
 	ctl = createNewDialControl( 50, initDefaultParam(filter.Q) );
 	ctl.style.left = "10px";
 	ctl.style.top = "40px";
-	ctl.onUpdateDial = onUpdateQ;
+	ctl.onUpdateDial = onUpdateFilterQ;
 	e.appendChild( ctl );
 
 	ctl = createNewDialControl( 50, initDefaultParam(filter.frequency) );
 	ctl.style.left = "70px";
 	ctl.style.top = "40px";
-	ctl.onUpdateDial = onUpdateFrequency;
+	ctl.onUpdateDial = onUpdateFilterFrequency;
+	e.appendChild( ctl );
+
+	ctl = createNewDialControl( 50, initDefaultParam(filter.gain) );
+	ctl.style.left = "10px";
+	ctl.style.top = "100px";
+	ctl.onUpdateDial = onUpdateFilterGain;
 	e.appendChild( ctl );
 
 }
