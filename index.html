@@ -130,6 +130,16 @@ function onUpdateABSNGain(e) {
 //	console.log( e.parentNode.audioNode.gain.value + "\n");
 }
 
+function onUpdateDelayTime(e) {
+	var i = parseFloat(e.getAttribute("val"));	// in range 0.0 - 100.0
+	var node = e.parentNode;
+	node.delay = i / 10;
+	if (node.audioNode) {
+		node.audioNode.delayTime.value = i / 10;
+	}
+//	console.log( e.parentNode.audioNode.gain.value + "\n");
+}
+
 function changeFilterType(e) {
 	if (e.target.parentNode.audioNode)
 		e.target.parentNode.audioNode.type = e.target.selectedIndex;
@@ -217,6 +227,19 @@ function onAnalyserConnectInput() {
 	}
 }
 
+function createDelayNode() {
+	var e=createNewNode("delay", true, true );
+	var delayNode = audioContext.createDelayNode();
+	e.audioNode = delayNode;
+
+	delayNode.delayTime.value = 0.5;
+	var ctl = createNewDialControl( 100, 5 );
+	ctl.style.left = "25px";
+	ctl.style.top = "50px";
+	ctl.onUpdateDial = onUpdateDelayTime;
+	e.appendChild( ctl );
+}
+
 function createAnalyserNode() {
 	var e=createNewNode("analyser", true, true );
 	var analyser = audioContext.createAnalyser();
@@ -238,6 +261,19 @@ function createAnalyserNode() {
 	e.drawingContext = canvas.getContext('2d');
 //	e.drawingContext.fillStyle = "blue";
 //	e.drawingContext.fillRect(0,0,150, 120);
+}
+
+function createGainNode() {
+	var e=createNewNode("gain", true, true );
+	var gainNode = audioContext.createGainNode();
+	e.audioNode = gainNode;
+
+	gainNode.gain.value = 1.0;
+	var ctl = createNewDialControl( 100, 100 );
+	ctl.style.left = "25px";
+	ctl.style.top = "50px";
+	ctl.onUpdateDial = onUpdateABSNGain;
+	e.appendChild( ctl );
 }
 
 
@@ -380,6 +416,8 @@ window.addEventListener('load', init, false);
 <div id="soundField">
 <div>Drop a sound file onto the page in order to create an AudioBufferSource with that file</div>
 <button onclick="downloadAudioFromURL('440Hz.ogg'); ">Sine Wave AudioBufferSource</button>
+<button onclick="createGainNode();">Gain Node</button>
+<button onclick="createDelayNode();">Delay Node</button>
 <button onclick="createBiquadFilterNode();">Biquad Filter</button>
 <button onclick="createAnalyserNode();">Spectrum Analyser</button>
 <button onclick="downloadImpulseFromURL('hall.ogg'); ">Hall Impulse ConvolutionNode</button>
