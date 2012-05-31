@@ -84,6 +84,12 @@ function hitplay(e) {
 	e.audioNode.noteOn(0);
 }
 
+function oscNoteOn(e) {
+  	e = e.target.parentNode; // the node element, not the play button.
+	if (e.audioNode)
+		e.audioNode.noteOn(0);
+}
+
 function hitstop(e) {
 	e.target.parentNode.audioNode.noteOff(0);
 }
@@ -103,7 +109,7 @@ function onUpdateFilterQ(e) {
 	//	console.log( e.parentNode.audioNode.frequency.value + "Hz Q=" + e.parentNode.audioNode.Q.value + "\n");
 }
 
-function onUpdateFilterFrequency(e) {
+function onUpdateFrequency(e) {
 	var param = e.parentNode.audioNode.frequency;
 	
 	var i = parseFloat(e.getAttribute("val"));	// in range 0.0 - 100.0
@@ -140,7 +146,7 @@ function onUpdateDelayTime(e) {
 //	console.log( e.parentNode.audioNode.gain.value + "\n");
 }
 
-function changeFilterType(e) {
+function changeType(e) {
 	if (e.target.parentNode.audioNode)
 		e.target.parentNode.audioNode.type = e.target.selectedIndex;
 }
@@ -160,7 +166,7 @@ function createBiquadFilterNode() {
 	var ctl=document.createElement("select");
 	ctl.type="select";
 	ctl.value="type";
-	ctl.addEventListener( "change", changeFilterType );
+	ctl.addEventListener( "change", changeType );
 
 	var opt = document.createElement("option");
 	opt.setAttribute("value", "lowpass");
@@ -208,13 +214,63 @@ function createBiquadFilterNode() {
 	ctl = createNewDialControl( 50, initDefaultParam(filter.frequency) );
 	ctl.style.left = "70px";
 	ctl.style.top = "40px";
-	ctl.onUpdateDial = onUpdateFilterFrequency;
+	ctl.onUpdateDial = onUpdateFrequency;
 	e.appendChild( ctl );
 
 	ctl = createNewDialControl( 50, initDefaultParam(filter.gain) );
 	ctl.style.left = "10px";
 	ctl.style.top = "100px";
 	ctl.onUpdateDial = onUpdateFilterGain;
+	e.appendChild( ctl );
+
+}
+
+function createOscillatorNode() {
+	var e=createNewNode("Oscillator", true, true );
+	var osc = audioContext.createOscillator();
+	e.audioNode = osc;
+	osc.type=osc.SINE;
+
+	var ctl=document.createElement("select");
+	ctl.type="select";
+	ctl.value="type";
+	ctl.addEventListener( "change", changeType );
+
+	var opt = document.createElement("option");
+	opt.setAttribute("value", "sine");
+	opt.appendChild(document.createTextNode("Sine"));
+	opt.setAttribute("selected");
+	ctl.appendChild(opt);
+	opt = document.createElement("option");
+	opt.setAttribute("value", "square");
+	opt.appendChild(document.createTextNode("Square"));
+	ctl.appendChild(opt);
+	opt = document.createElement("option");
+	opt.setAttribute("value", "sawtooth");
+	opt.appendChild(document.createTextNode("Sawtooth"));
+	ctl.appendChild(opt);
+	opt = document.createElement("option");
+	opt.setAttribute("value", "triangle");
+	opt.appendChild(document.createTextNode("Triangle"));
+	ctl.appendChild(opt);
+	
+	ctl.selectedIndex="0";
+	e.appendChild(ctl);
+
+	ctl=document.createElement("button");
+	ctl.appendChild(document.createTextNode("note on"));
+	ctl.onclick = oscNoteOn;
+	e.appendChild(ctl);
+
+	ctl=document.createElement("button");
+	ctl.appendChild(document.createTextNode("note off"));
+	ctl.onclick = hitstop;
+	e.appendChild(ctl);
+
+	ctl = createNewDialControl( 100, initDefaultParam(osc.frequency) );
+	ctl.style.left = "10px";
+	ctl.style.top = "55px";
+	ctl.onUpdateDial = onUpdateFrequency;
 	e.appendChild( ctl );
 
 }
@@ -388,12 +444,12 @@ function initDragDropOfAudioFiles() {
 
 // Initialization function for the page.
 function init() {
-  	try {
-    	audioContext = new webkitAudioContext();
-  	}
-  	catch(e) {
-    	alert('Web Audio API is not supported in this browser');
-  	}
+	  	try {
+	    	audioContext = new webkitAudioContext();
+	  	}
+	  	catch(e) {
+	    	alert('Web Audio API is not supported in this browser');
+	  	}
 
 	initDragDropOfAudioFiles();	// set up page as a drop site for audio files
 
@@ -401,7 +457,9 @@ function init() {
 	var dest = createNewNode("destination", true, false );
 	dest.style.backgroundImage = "url(Speaker_Icon_gray.svg)";
 	dest.style.backgroundSize = "contain";
+	dest.style.left = "" + (window.innerWidth - 225) + "px";
 	dest.audioNode = audioContext.destination;
+	stringifyAudio();
 }
 
 window.addEventListener('load', init, false);
@@ -418,6 +476,7 @@ window.addEventListener('load', init, false);
 <button onclick="downloadAudioFromURL('440Hz.ogg'); ">Sine Wave AudioBufferSource</button>
 <button onclick="createGainNode();">Gain Node</button>
 <button onclick="createDelayNode();">Delay Node</button>
+<button onclick="createOscillatorNode();">Oscillator</button>
 <button onclick="createBiquadFilterNode();">Biquad Filter</button>
 <button onclick="createAnalyserNode();">Spectrum Analyser</button>
 <button onclick="downloadImpulseFromURL('hall.ogg'); ">Hall Impulse ConvolutionNode</button>
@@ -426,9 +485,11 @@ window.addEventListener('load', init, false);
 <button onclick="var uri=prompt('Enter a URL to an impulse file'); if (uri) downloadImpulseFromURL(uri); ">Convolver from impulse file URL</button>
 
 </div>
+<textarea id="code" style="position: absolute; left:0px; width:100%; height: 100px; bottom: 10px;"></textarea>
+
 <!-- SVG canvas is just for drawing the connector lines -->
 <svg id=svgCanvas xmlns="http://www.w3.org/2000/svg" version="1.1"  
-  style="width:100%; height:100%; position:absolute; top:0; left:0; z-index:-1;">  
+  style="width:100%; height:100%; position:absolute; top:0; left:0; z-index:-1;">
 </svg>
 </body>
 </html>

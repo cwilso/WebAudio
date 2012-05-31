@@ -292,3 +292,24 @@ function stopDraggingConnector(event) {
 	dragObj.connectorShape.parentNode.removeChild(dragObj.connectorShape);
 	dragObj.connectorShape = null;
 }
+
+function stringifyAudio() {
+	var code = "var context=null;\ntry \{\n\tcontext = window.webkitAudioContent ? " +
+		"new webkitAudioContext\(\) : new audioContext;\n}\ncatch(e) \{\n" +
+		"\talert\('Web Audio API is not supported in this browser'\);\n\}\n";
+
+	var nodes = document.getElementById("soundField").children;
+
+	for (var i=0; i<nodes.length; i++) {
+		if ( nodes[i].audioNode ) {
+			switch ( nodes[i].audioNodeType ) {
+				case "audioBufferSource":
+					code += "\tvar ABSN = context.createBufferSource();\n\tABSN.gain = " + 
+						nodes[i].gain + ";\n\tABSN.buffer = myBuffer;\n\tABSN.connect();\n";
+					break;
+			}
+		}
+	}
+	// add the node into the soundfield
+	document.getElementById("code").innerHTML = code;
+}
