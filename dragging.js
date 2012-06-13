@@ -294,8 +294,8 @@ function stopDraggingConnector(event) {
 }
 
 function stringifyAudio() {
-	var code = "var context=null;\ntry \{\n\tcontext = window.webkitAudioContent ? " +
-		"new webkitAudioContext\(\) : new audioContext;\n}\ncatch(e) \{\n" +
+	var code = "var context=null;\ntry \{\n\tcontext = window.webkitAudioContext ? " +
+		"new webkitAudioContext\(\) : new audioContext\(\);\n}\ncatch(e) \{\n" +
 		"\talert\('Web Audio API is not supported in this browser'\);\n\}\n";
 
 	var nodes = document.getElementById("soundField").children;
