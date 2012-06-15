@@ -45,6 +45,11 @@ function createNewModule( nodeType, input, output ) {
 		e.outputs = i;
 	}
 	
+	var close = document.createElement("a");
+	close.href = "#";
+	close.className = "close";
+	e.appendChild( close );
+
 	// add the node into the soundfield
 	document.getElementById("modules").appendChild(e);
 	return(content);
@@ -86,6 +91,27 @@ function createOscillator() {
 	osc.className += " has-footer";
 
 	// Add footer element
+	var footer = document.createElement("footer");
+	var sel = document.createElement("select");
+	sel.className = "osc-type";
+	var opt = document.createElement("option");
+	opt.appendChild( document.createTextNode("sine"));
+	sel.appendChild( opt );
+	opt = document.createElement("option");
+	opt.appendChild( document.createTextNode("square"));
+	sel.appendChild( opt );
+	opt = document.createElement("option");
+	opt.appendChild( document.createTextNode("sawtooth"));
+	sel.appendChild( opt );
+	opt = document.createElement("option");
+	opt.appendChild( document.createTextNode("triangle"));
+	sel.appendChild( opt );
+	opt = document.createElement("option");
+	opt.appendChild( document.createTextNode("wavetable"));
+	sel.appendChild( opt );
+	footer.appendChild( sel );
+	osc.appendChild( footer );
+	
 	// Add select element and type options
 
 	var oscNode = audioContext.createOscillator();

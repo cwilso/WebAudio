@@ -349,6 +349,10 @@ body {
 	margin: 0;
 }
 
+.control-group:last-of-type {
+	margin: 0;
+}
+
 /* Slider */
 .slider-info {
 	font-size: .625em; /* 10 / 16 */
