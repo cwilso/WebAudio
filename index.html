@@ -12,6 +12,8 @@
 	<script src="js/jquery-1.7.2.min.js"></script>
 	<script src="js/jquery-ui-1.8.21.custom.min.js"></script>
 	<script src="js/ui.js"></script>
+	<script src="js/main.js"></script>
+	<script src="js/dragging.js"></script>
 </head>
 <body>
 	<div id="main" class="container">
@@ -24,9 +26,9 @@
 					<a href="#">Add Audio Source</a>
 					<div class="sub-menu">
 						<ul>
-							<li><a href="#">Sine Wave Audio Buffer Source</a></li>
+							<li><a href="#">Drums Audio Buffer Source</a></li>
 							<li><a href="#">Audio Buffer Source From URL</a></li>
-							<li><a href="#">Convolver From Impulse File URL</a></li>
+							<li><a href="#" onclick="createOscillator()">Oscillator</a></li>
 						</ul>
 					</div>	
 				</li>
@@ -38,8 +40,8 @@
 							<li><a href="#">Delay Node</a></li>
 							<li><a href="#">Dynamics Compressor</a></li>
 							<li><a href="#">Gain Node</a></li>
-							<li><a href="#">Hall Impulse Convolution</a></li>
-							<li><a href="#">Oscillator</a></li>
+							<li><a href="#">Hall Impulse Convolver</a></li>
+							<li><a href="#">Convolver From Impulse File URL</a></li>
 							<li><a href="#">Spectrum Analyser</a></li>
 						</ul>
 					</div>	
@@ -48,7 +50,7 @@
 		</nav>
 		<section id="modules" class="container">
 			<!-- Audio buffer source -->
-			<div class="module audio-buffer-source has-footer has-loop">
+			<div style="left:50px; top: 150px;" class="module audio-buffer-source has-footer has-loop">
 				<div class="content">
 					<h6>Audio Buffer Source</h6>	
 					<img src="img/ico-play.gif" alt="Audio play icon" />
@@ -67,7 +69,7 @@
 			</div>
 
 			<!-- Analyser -->
-			<div class="module analyser">
+			<div style="left:300px; top: 150px;" class="module analyser">
 				<div class="content">
 					<h6>Analyser</h6>	
 					<img src="img/ico-analyser.gif" alt="Analyzer graph" />
@@ -78,7 +80,7 @@
 			</div>
 
 			<!-- Biquad filter -->
-			<div class="module biquad-filter has-footer">
+			<div style="left:600px; top: 150px;" class="module biquad-filter has-footer">
 				<div class="content">
 					<h6>Biquad Filter</h6>	
 					<div class="control-group">
@@ -114,7 +116,7 @@
 			</div>
 
 			<!-- Convolver -->
-			<div class="module convolver has-footer">
+			<div style="left:825px; top: 150px;" class="module convolver has-footer">
 				<div class="content">
 					<h6>Convolver</h6>	
 				</div>
@@ -131,7 +133,7 @@
 			</div>
 
 			<!-- Delay -->
-			<div class="module delay">
+			<div style="left:50px; top: 450px;" class="module delay">
 				<div class="content">
 					<h6>Delay</h6>	
 					<div class="control-group last">
@@ -148,7 +150,7 @@
 			</div>
 
 			<!-- Dynamics compressor -->
-			<div class="module biquad-filter">
+			<div style="left:300px; top: 450px;" class="module biquad-filter">
 				<div class="content">
 					<h6>Dynamics Compressor</h6>	
 					<div class="control-group">
@@ -193,7 +195,7 @@
 			</div>
 
 			<!-- Gain -->
-			<div class="module gain">
+			<div style="left:525px; top: 450px;" class="module gain">
 				<div class="content">
 					<h6>Gain</h6>	
 					<div class="control-group last">
@@ -210,7 +212,7 @@
 			</div>
 
 			<!-- Oscillator -->
-			<div class="module oscillator has-footer">
+			<div style="left:750px; top: 450px;" class="module oscillator has-footer">
 				<div class="content">
 					<h6>Oscillator</h6>	
 					<div class="control-group">
@@ -230,7 +232,10 @@
 				</div>
 				<footer>
 					<select>
+						<option>Sine</option>
 						<option>Sawtooth</option>
+						<option>Square</option>
+						<option>WaveTable</option>
 					</select>
 				</footer>
 				<div class="node node-input"><span>&nbsp;</span></div>
@@ -241,11 +246,10 @@
 	</div> <!-- /#main -->
 
 	<div id="output">
-		<div class="node node-input"><span>&nbsp;</span></div>
+		<div class="node node-input"><span class="node-button">&nbsp;</span></div>
 	</div> <!-- /#output -->
 
-	<!--
 	<svg id=svgCanvas xmlns="http://www.w3.org/2000/svg" version="1.1" style="width:100%; height:100%; position:absolute; top:0; left:0; z-index:-1;"></svg>
-	-->
+
 </body>
 </html>
