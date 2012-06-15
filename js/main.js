@@ -1,12 +1,10 @@
 var audioContext = null;
 
 var tempx=100, tempy=100;
-var idX = 0;
 
-function createNewModule( nodeType, input, output ) {
+function createNewNode( nodeType, input, output ) {
 	var e=document.createElement("div");
-	e.className="module " + nodeType;
-	e.id = "module" + idX++;
+	e.className="node " + nodeType;
 	e.style.left="" + tempx + "px";
 	if (tempx > 500)
 		tempx = 100;
@@ -19,68 +17,27 @@ function createNewModule( nodeType, input, output ) {
 		tempy += 50;
 	e.setAttribute("audioNodeType", nodeType );
 	e.onmousedown=startDraggingNode;
-	var content = document.createElement("div");
-	content.className="content";
-	e.appendChild(content);
-	var title = document.createElement("h6");
-	title.className = "module-title";
-	title.appendChild(document.createTextNode(nodeType));
-	content.appendChild(title);
-
+	e.appendChild(document.createTextNode(nodeType));
+	
 	if (input) {
 		var i=document.createElement("div");
-		i.className="node node-input ";
+		i.className="inputconnector";
 		i.onmousedown=startDraggingConnector;
-		i.innerHTML = "<span class='node-button'>&nbsp;</span>";
 		e.appendChild(i);
 		e.inputs = i;
 	}
 	
 	if (output) {
 		var i=document.createElement("div");
-		i.className="node node-output";
+		i.className="outputconnector";
 		i.onmousedown=startDraggingConnector;
-		i.innerHTML = "<span class='node-button'>&nbsp;</span>";
 		e.appendChild(i);
 		e.outputs = i;
 	}
 	
 	// add the node into the soundfield
-	document.getElementById("modules").appendChild(e);
-	return(content);
-}
-
-function addModuleSlider( element, label, value, min, max, units ) {
-	var group = document.createElement("div");
-	group.className="control-group";
-
-	var info = document.createElement("div");
-	info.className="slider-info";
-	info.setAttribute("min", min );
-	info.setAttribute("max", max );
-	var lab = document.createElement("span");
-	lab.className="label";
-	lab.appendChild(document.createTextNode(label));
-	info.appendChild(lab);
-	var val = document.createElement("span");
-	val.className="value";
-	val.appendChild(document.createTextNode("" + value + units));
-	info.appendChild(val);
-	group.appendChild(info);
-
-	var slider = document.createElement("div");
-	slider.className="slider";
-	group.appendChild(slider);
-
-	element.appendChild(group);
-	return slider;
-}
-
-function createOscillator() {
-	var osc = createNewModule( "oscillator", false, true );
-	osc.className += " has-footer";
-	$( addModuleSlider( osc, "frequency", 440, 0, 8000, "Hz" ) ).slider();
-	$( addModuleSlider( osc, "detune", 0, -1200, 1200, "cents" ) ).slider();
+	document.getElementById("soundField").appendChild(e);
+	return(e);
 }
 
 function hitplay(e) {
@@ -466,22 +423,22 @@ function initDragDropOfAudioFiles() {
 
 // Initialization function for the page.
 function init() {
-  	try {
-    	audioContext = new webkitAudioContext();
-  	}
-  	catch(e) {
-    	alert('Web Audio API is not supported in this browser.');
-  	}
-
-  	if (!audioContext.createOscillator)
-    	alert('Oscillators not supported - you may need to run Chrome Canary.');
+	  	try {
+	    	audioContext = new webkitAudioContext();
+	  	}
+	  	catch(e) {
+	    	alert('Web Audio API is not supported in this browser');
+	  	}
 
 	initDragDropOfAudioFiles();	// set up page as a drop site for audio files
 
 	// create the one-and-only destination node for the context
-	var dest = document.getElementById("output");
+	var dest = createNewNode("destination", true, false );
+	dest.style.backgroundImage = "url(Speaker_Icon_gray.svg)";
+	dest.style.backgroundSize = "contain";
+	dest.style.left = "" + (window.innerWidth - 225) + "px";
 	dest.audioNode = audioContext.destination;
-//	stringifyAudio();
+	stringifyAudio();
 }
 
 window.addEventListener('load', init, false);
