@@ -78,10 +78,28 @@ function addModuleSlider( element, label, value, min, max, units ) {
 
 function createOscillator() {
 	var osc = createNewModule( "oscillator", false, true );
-	osc.className += " has-footer";
 	$( addModuleSlider( osc, "frequency", 440, 0, 8000, "Hz" ) ).slider();
 	$( addModuleSlider( osc, "detune", 0, -1200, 1200, "cents" ) ).slider();
+	// TODO: add play button
+
+	osc = osc.parentNode;
+	osc.className += " has-footer";
+
+	// Add footer element
+	// Add select element and type options
+
+	var oscNode = audioContext.createOscillator();
+	oscNode.frequency = 440;
+	oscNode.detune = 0;
+	oscNode.type = oscNode.SINE;
+	osc.audioNode = oscNode;
+//	oscNode.noteOn(0);
 }
+
+
+
+
+
 
 function hitplay(e) {
   	e = e.target.parentNode; // the node element, not the play button.
