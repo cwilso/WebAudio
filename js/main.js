@@ -1,22 +1,45 @@
-var audioContext = null;
+//TODO:  
+/* 
 
-var tempx=100, tempy=100;
+Add glass hit file
+
+restart ABS
+restart osc
+
+select different ABS files
+"add new" in ABS
+
+select different convolver files
+"add new" in convolver
+
+
+drop convolver file on module
+drop sound file on ABS module
+wavetable
+*test - hide header if in frame
+
+*/
+
+
+var audioContext = null;
+var tempx=50, tempy=150;
 var idX = 0;
+var lastBufferLoaded = null;
 
 function createNewModule( nodeType, input, output ) {
 	var e=document.createElement("div");
 	e.className="module " + nodeType;
 	e.id = "module" + idX++;
 	e.style.left="" + tempx + "px";
-	if (tempx > 500)
-		tempx = 100;
-		else
-		tempx += 50;
 	e.style.top="" + tempy + "px";
-	if (tempy > 1000)
+	if (tempx > 700) {
+		tempy += 250;
+		tempx = 50;
+	} else
+		tempx += 250;
+	if (tempy > 600)
 		tempy = 100;
-		else
-		tempy += 50;
+
 	e.setAttribute("audioNodeType", nodeType );
 	e.onmousedown=startDraggingNode;
 	var content = document.createElement("div");
@@ -48,6 +71,7 @@ function createNewModule( nodeType, input, output ) {
 	var close = document.createElement("a");
 	close.href = "#";
 	close.className = "close";
+	close.onclick = deleteModule;
 	e.appendChild( close );
 
 	// add the node into the soundfield
@@ -55,22 +79,26 @@ function createNewModule( nodeType, input, output ) {
 	return(content);
 }
 
-function addModuleSlider( element, label, value, min, max, units ) {
+function addModuleSlider( element, label, ivalue, imin, imax, stepUnits, units, onUpdate ) {
 	var group = document.createElement("div");
 	group.className="control-group";
 
 	var info = document.createElement("div");
 	info.className="slider-info";
-	info.setAttribute("min", min );
-	info.setAttribute("max", max );
+	info.setAttribute("min", imin );
+	info.setAttribute("max", imax );
 	var lab = document.createElement("span");
 	lab.className="label";
 	lab.appendChild(document.createTextNode(label));
 	info.appendChild(lab);
 	var val = document.createElement("span");
 	val.className="value";
-	val.appendChild(document.createTextNode("" + value + units));
+	val.appendChild(document.createTextNode("" + ivalue + " " + units));
+
+	// cache the units type on the element for updates
+	val.setAttribute("units",units);
 	info.appendChild(val);
+
 	group.appendChild(info);
 
 	var slider = document.createElement("div");
@@ -78,55 +106,164 @@ function addModuleSlider( element, label, value, min, max, units ) {
 	group.appendChild(slider);
 
 	element.appendChild(group);
-	return slider;
+	return $( slider ).slider( { slide: onUpdate, value: ivalue, min: imin, max: imax, step: stepUnits } );
 }
 
-function createOscillator() {
-	var osc = createNewModule( "oscillator", false, true );
-	$( addModuleSlider( osc, "frequency", 440, 0, 8000, "Hz" ) ).slider();
-	$( addModuleSlider( osc, "detune", 0, -1200, 1200, "cents" ) ).slider();
-	// TODO: add play button
 
-	osc = osc.parentNode;
-	osc.className += " has-footer";
+function onUpdateDetune(event, ui) {
+	updateSlider(event, ui).audioNode.detune.value = ui.value;
+}
 
-	// Add footer element
-	var footer = document.createElement("footer");
-	var sel = document.createElement("select");
-	sel.className = "osc-type";
-	var opt = document.createElement("option");
-	opt.appendChild( document.createTextNode("sine"));
-	sel.appendChild( opt );
-	opt = document.createElement("option");
-	opt.appendChild( document.createTextNode("square"));
-	sel.appendChild( opt );
-	opt = document.createElement("option");
-	opt.appendChild( document.createTextNode("sawtooth"));
-	sel.appendChild( opt );
-	opt = document.createElement("option");
-	opt.appendChild( document.createTextNode("triangle"));
-	sel.appendChild( opt );
-	opt = document.createElement("option");
-	opt.appendChild( document.createTextNode("wavetable"));
-	sel.appendChild( opt );
-	footer.appendChild( sel );
-	osc.appendChild( footer );
+function onUpdateFrequency(event, ui) {
+	updateSlider(event, ui).audioNode.frequency.value = ui.value;
+}
+
+function onUpdateGain(event, ui) {
+	updateSlider(event, ui).audioNode.gain.value = ui.value;
+}
+
+function onUpdateDelay(event, ui) {
+	updateSlider(event, ui).audioNode.delayTime.value = ui.value;
+}
+
+function onUpdateThreshold(event, ui) {
+	updateSlider(event, ui).audioNode.threshold.value = ui.value;
+}
+
+function onUpdateKnee(event, ui) {
+	updateSlider(event, ui).audioNode.knee.value = ui.value;
+}
+
+function onUpdateRatio(event, ui) {
+	updateSlider(event, ui).audioNode.ratio.value = ui.value;
+}
+
+function onUpdateAttack(event, ui) {
+	updateSlider(event, ui).audioNode.attack.value = ui.value;
+}
+
+function onUpdateRelease(event, ui) {
+	updateSlider(event, ui).audioNode.release.value = ui.value;
+}
+
+function onUpdateQ(event, ui) {
+	updateSlider(event, ui).audioNode.Q.value = ui.value;
+}
+
+function updateSlider(event, ui, callback) {
+	var e = event.target;
+	var group = null;
+	while (!e.classList.contains("module")) {
+		if (e.classList.contains("control-group"))
+			group = e;
+		e = e.parentNode;
+	}
+
+	//TODO: yes, this is lazy coding, and fragile.
+	var output = group.children[0].children[1];
+
+	// update the value text
+	output.innerText = "" + ui.value + " " + output.getAttribute("units");
+	return e;
+}
+
+function onPlayOscillator(event) {
+	var playButton = event.target;
+	if (playButton.isPlaying) {
+		//stop
+		playButton.isPlaying = false;
+		playButton.src = "img/ico-play.gif";
+		var e = playButton.parentNode;
+		while (e && !e.audioNode)
+			e = e.parentNode;
+		if (e)
+			e.audioNode.noteOff(0);
+	} else {
+		//play - TODO: fix up for second play
+		playButton.isPlaying = true;
+		playButton.src = "img/ico-stop.gif";
+		var e = playButton.parentNode;
+		while (e && !e.audioNode)
+			e = e.parentNode;
+		if (e)
+			e.audioNode.noteOn(0);
+	}
+}
+
+function onToggleLoop(event) {
+	var checkbox = event.target;
 	
-	// Add select element and type options
-
-	var oscNode = audioContext.createOscillator();
-	oscNode.frequency = 440;
-	oscNode.detune = 0;
-	oscNode.type = oscNode.SINE;
-	osc.audioNode = oscNode;
-//	oscNode.noteOn(0);
+//TODO: fix up for second play
+	var e = checkbox.parentNode;
+	while (e && !e.audioNode)
+		e = e.parentNode;
+	if (e)
+		e.audioNode.loop = checkbox.checked;
 }
 
+function onToggleNormalize(event) {
+	var checkbox = event.target;
 
+	var e = checkbox.parentNode;
+	while (e && !e.audioNode)
+		e = e.parentNode;
+	if (e)
+		e.audioNode.normalize = checkbox.checked;
+}
 
+function switchOscillatorTypes(event) {
+	var select = event.target;
 
+	var e = select.parentNode;
+	while (e && !e.audioNode)
+		e = e.parentNode;
+	if (e) {
+		// TODO: wavetable!
+		e.audioNode.type = select.selectedIndex;
+	}
+}
 
+function switchFilterTypes(event) {
+	var select = event.target;
+	var fType = select.selectedIndex;
 
+	var e = select.parentNode;
+	while (e && !e.audioNode)
+		e = e.parentNode;
+	if (e) {
+		e.audioNode.type = fType;
+		if (fType>2 && fType<6) {
+			$( e.gainSlider ).slider( "option", "disabled", false );
+		} else {
+			$( e.gainSlider ).slider( "option", "disabled", true );
+		}
+	}
+}
+
+function onPlayABSource(event) {
+	var playButton = event.target;
+	if (playButton.isPlaying) {
+		//stop
+		playButton.isPlaying = false;
+		playButton.src = "img/ico-play.gif";
+		var e = playButton.parentNode;
+		while (e && !e.audioNode)
+			e = e.parentNode;
+		if (e)
+			e.audioNode.noteOff(0);
+	} else {
+		//play - TODO: fix up for second play
+		playButton.isPlaying = true;
+		playButton.src = "img/ico-stop.gif";
+		var e = playButton.parentNode;
+		while (e && !e.audioNode)
+			e = e.parentNode;
+		if (e)
+			e.audioNode.noteOn(0);
+	}
+}
+
+/* historic code, need to poach connection stuff
 function hitplay(e) {
   	e = e.target.parentNode; // the node element, not the play button.
 
@@ -150,194 +287,229 @@ function hitplay(e) {
 	e.audioNode.noteOn(0);
 }
 
-function oscNoteOn(e) {
-  	e = e.target.parentNode; // the node element, not the play button.
-	if (e.audioNode)
-		e.audioNode.noteOn(0);
-}
-
 function hitstop(e) {
 	e.target.parentNode.audioNode.noteOff(0);
+	e.target.parentNode.audioNode = null;
 }
+*/
 
-function flipLoop(e) {
-	e.target.checked = !e.target.checked;
-	if (e.target.parentNode.audioNode)
-		e.target.parentNode.audioNode.loop = e.target.checked;
-}
 
-function onUpdateFilterQ(e) {
-	var param = e.parentNode.audioNode.Q;
+
+function createOscillator() {
+	var osc = createNewModule( "oscillator", false, true );
+	addModuleSlider( osc, "frequency", 440, 0, 8000, 1, "Hz", onUpdateFrequency );
+	addModuleSlider( osc, "detune", 0, -1200, 1200, 1, "cents", onUpdateDetune );
+
+	var play = document.createElement("img");
+	play.src = "img/ico-play.gif";
+	play.style.marginTop = "10px";
+	play.alt = "play";
+	play.onclick = onPlayOscillator;
+	osc.appendChild( play );
 	
-	var i = parseFloat(e.getAttribute("val"));	// in range 0.0 - 100.0
-	var range = param.maxValue - param.minValue;
-	param.value = ((i * range) / 100) + param.minValue;
-	//	console.log( e.parentNode.audioNode.frequency.value + "Hz Q=" + e.parentNode.audioNode.Q.value + "\n");
-}
+	osc = osc.parentNode;
+	osc.className += " has-footer";
 
-function onUpdateFrequency(e) {
-	var param = e.parentNode.audioNode.frequency;
-	
-	var i = parseFloat(e.getAttribute("val"));	// in range 0.0 - 100.0
-	var range = param.maxValue - param.minValue;
-	param.value = ((i * range) / 100) + param.minValue;
-//	console.log( e.parentNode.audioNode.frequency.value + "Hz Q=" + e.parentNode.audioNode.Q.value + "\n");
-}
-
-function onUpdateFilterGain(e) {
-	var param = e.parentNode.audioNode.gain;
-	
-	var i = parseFloat(e.getAttribute("val"));	// in range 0.0 - 100.0
-	var range = param.maxValue - param.minValue;
-	param.value = ((i * range) / 100) + param.minValue;
-}
-
-function onUpdateABSNGain(e) {
-	var i = parseFloat(e.getAttribute("val"));	// in range 0.0 - 100.0
-	var node = e.parentNode;
-	node.gain = i / 100;
-	if (node.audioNode) {
-		node.audioNode.gain.value = i / 100;
-	}
-//	console.log( e.parentNode.audioNode.gain.value + "\n");
-}
-
-function onUpdateDelayTime(e) {
-	var i = parseFloat(e.getAttribute("val"));	// in range 0.0 - 100.0
-	var node = e.parentNode;
-	node.delay = i / 10;
-	if (node.audioNode) {
-		node.audioNode.delayTime.value = i / 10;
-	}
-//	console.log( e.parentNode.audioNode.gain.value + "\n");
-}
-
-function changeType(e) {
-	if (e.target.parentNode.audioNode)
-		e.target.parentNode.audioNode.type = e.target.selectedIndex;
-}
-
-function initDefaultParam(param) {
-	var range = param.maxValue - param.minValue;
-	param.value = param.defaultValue;
-	return ((param.value - param.minValue) * 100) / range;
-}
-
-function createBiquadFilterNode() {
-	var e=createNewNode("biquadFilter", true, true );
-	var filter = audioContext.createBiquadFilter();
-	e.audioNode = filter;
-	filter.type=0;
-
-	var ctl=document.createElement("select");
-	ctl.type="select";
-	ctl.value="type";
-	ctl.addEventListener( "change", changeType );
-
+	// Add footer element
+	var footer = document.createElement("footer");
+	var sel = document.createElement("select");
+	sel.className = "osc-type";
 	var opt = document.createElement("option");
-	opt.setAttribute("value", "lowpass");
-	opt.appendChild(document.createTextNode("Low Pass"));
-	opt.setAttribute("selected");
-	ctl.appendChild(opt);
+	opt.appendChild( document.createTextNode("sine"));
+	sel.appendChild( opt );
 	opt = document.createElement("option");
-	opt.setAttribute("value", "highpass");
-	opt.appendChild(document.createTextNode("High Pass"));
-	ctl.appendChild(opt);
+	opt.appendChild( document.createTextNode("square"));
+	sel.appendChild( opt );
 	opt = document.createElement("option");
-	opt.setAttribute("value", "bandpass");
-	opt.appendChild(document.createTextNode("Band Pass"));
-	ctl.appendChild(opt);
+	opt.appendChild( document.createTextNode("sawtooth"));
+	sel.appendChild( opt );
 	opt = document.createElement("option");
-	opt.setAttribute("value", "lowshelf");
-	opt.appendChild(document.createTextNode("Low Shelf"));
-	ctl.appendChild(opt);
+	opt.appendChild( document.createTextNode("triangle"));
+	sel.appendChild( opt );
 	opt = document.createElement("option");
-	opt.setAttribute("value", "highshelf");
-	opt.appendChild(document.createTextNode("High Shelf"));
-	ctl.appendChild(opt);
-	opt = document.createElement("option");
-	opt.setAttribute("value", "peaking");
-	opt.appendChild(document.createTextNode("Peaking"));
-	ctl.appendChild(opt);
-	opt = document.createElement("option");
-	opt.setAttribute("value", "notch");
-	opt.appendChild(document.createTextNode("Notch"));
-	ctl.appendChild(opt);
-	opt = document.createElement("option");
-	opt.setAttribute("value", "allpass");
-	opt.appendChild(document.createTextNode("All Pass"));
-	ctl.appendChild(opt);
+	opt.appendChild( document.createTextNode("wavetable"));
+	sel.onchange = switchOscillatorTypes;
+	sel.appendChild( opt );
+	footer.appendChild( sel );
+	osc.appendChild( footer );
 	
-	ctl.selectedIndex="0";
-	e.appendChild(ctl);
-
-	ctl = createNewDialControl( 50, initDefaultParam(filter.Q) );
-	ctl.style.left = "10px";
-	ctl.style.top = "40px";
-	ctl.onUpdateDial = onUpdateFilterQ;
-	e.appendChild( ctl );
-
-	ctl = createNewDialControl( 50, initDefaultParam(filter.frequency) );
-	ctl.style.left = "70px";
-	ctl.style.top = "40px";
-	ctl.onUpdateDial = onUpdateFrequency;
-	e.appendChild( ctl );
-
-	ctl = createNewDialControl( 50, initDefaultParam(filter.gain) );
-	ctl.style.left = "10px";
-	ctl.style.top = "100px";
-	ctl.onUpdateDial = onUpdateFilterGain;
-	e.appendChild( ctl );
-
+	// Add select element and type options
+	var oscNode = audioContext.createOscillator();
+	oscNode.frequency = 440;
+	oscNode.detune = 0;
+	oscNode.type = oscNode.SINE;
+	osc.audioNode = oscNode;
 }
 
-function createOscillatorNode() {
-	var e=createNewNode("Oscillator", true, true );
-	var osc = audioContext.createOscillator();
-	e.audioNode = osc;
-	osc.type=osc.SINE;
+function createGain() {
+	var module = createNewModule( "gain", true, true );
+	addModuleSlider( module, "gain", 1.0, 0.0, 10.0, 0.01, "", onUpdateGain );
 
-	var ctl=document.createElement("select");
-	ctl.type="select";
-	ctl.value="type";
-	ctl.addEventListener( "change", changeType );
+	// after adding sliders, walk up to the module to store the audioNode.
+	module = module.parentNode;
 
-	var opt = document.createElement("option");
-	opt.setAttribute("value", "sine");
-	opt.appendChild(document.createTextNode("Sine"));
-	opt.setAttribute("selected");
-	ctl.appendChild(opt);
-	opt = document.createElement("option");
-	opt.setAttribute("value", "square");
-	opt.appendChild(document.createTextNode("Square"));
-	ctl.appendChild(opt);
-	opt = document.createElement("option");
-	opt.setAttribute("value", "sawtooth");
-	opt.appendChild(document.createTextNode("Sawtooth"));
-	ctl.appendChild(opt);
-	opt = document.createElement("option");
-	opt.setAttribute("value", "triangle");
-	opt.appendChild(document.createTextNode("Triangle"));
-	ctl.appendChild(opt);
+	var gainNode = audioContext.createGainNode();
+	gainNode.gain.value = 1.0;
+	module.audioNode = gainNode;
+}
+
+function createDelay() {
+	var module = createNewModule( "delay", true, true );
+	addModuleSlider( module, "delay time", 0.5, 0.0, 10.0, 0.01, "sec", onUpdateDelay );
+
+	// after adding sliders, walk up to the module to store the audioNode.
+	module = module.parentNode;
+
+	var delayNode = audioContext.createDelayNode();
+	delayNode.delayTime.value = 0.5;
+	module.audioNode = delayNode;
+}
+
+function createAudioBufferSource( buffer ) {
+	var module = createNewModule( "audiobuffersource", false, true );
+
+	var play = document.createElement("img");
+	play.src = "img/ico-play.gif";
+	play.style.marginTop = "10px";
+	play.alt = "play";
+	play.onclick = onPlayABSource;
+	module.appendChild( play );
 	
-	ctl.selectedIndex="0";
-	e.appendChild(ctl);
+	module = module.parentNode;
+	module.className += " has-footer has-loop";
 
-	ctl=document.createElement("button");
-	ctl.appendChild(document.createTextNode("note on"));
-	ctl.onclick = oscNoteOn;
-	e.appendChild(ctl);
+	// Add footer element
+	var footer = document.createElement("footer");
 
-	ctl=document.createElement("button");
-	ctl.appendChild(document.createTextNode("note off"));
-	ctl.onclick = hitstop;
-	e.appendChild(ctl);
+	var looper = document.createElement("div");
+	looper.className = "loop";
+	var label = document.createElement("label");
+	var check = document.createElement("input");
+	check.type = "checkbox";
+	check.onchange = onToggleLoop;
+	label.appendChild(check);
+	label.appendChild(document.createTextNode(" Loop"));
+	looper.appendChild(label);
+	footer.appendChild(looper);
 
-	ctl = createNewDialControl( 100, initDefaultParam(osc.frequency) );
-	ctl.style.left = "10px";
-	ctl.style.top = "55px";
-	ctl.onUpdateDial = onUpdateFrequency;
-	e.appendChild( ctl );
+	var sel = document.createElement("select");
+	sel.className = "ab-source";
+	var opt = document.createElement("option");
+
+	if (buffer) {	// TODO:  NASTY HACK!  USING A GLOBAL!
+		opt.appendChild( document.createTextNode( lastBufferLoaded ));
+		sel.appendChild( opt );
+		opt = document.createElement("option");
+	}
+
+	opt.appendChild( document.createTextNode("drums.ogg"));
+	sel.appendChild( opt );
+	opt = document.createElement("option");
+	opt.appendChild( document.createTextNode("glass.ogg"));
+	sel.appendChild( opt );
+	opt = document.createElement("option");
+	opt.appendChild( document.createTextNode("voice.ogg"));
+	sel.appendChild( opt );
+	opt = document.createElement("option");
+	opt.appendChild( document.createTextNode("bass.ogg"));
+	sel.appendChild( opt );
+	opt = document.createElement("option");
+	opt.appendChild( document.createTextNode("guitar.ogg"));
+	sel.appendChild( opt );
+	footer.appendChild( sel );
+	module.appendChild( footer );
+	
+	// Add select element and type options
+	var sourceNode = audioContext.createBufferSource();
+	sourceNode.buffer = buffer ? buffer : drumsBuffer;
+	module.audioNode = sourceNode;
+	return module;
+}
+
+
+function createDynamicsCompressor() {
+	var module = createNewModule( "dynamicscompressor", true, true );
+	addModuleSlider( module, "threshold", -24.0, -36.0, 0.0, 0.01, "Db", onUpdateThreshold );
+	addModuleSlider( module, "knee", 30.0, 0.0, 40.0, 0.01, "Db", onUpdateKnee );
+	addModuleSlider( module, "ratio", 12.0, 1.0, 50.0, 0.1, "", onUpdateRatio );
+	addModuleSlider( module, "attack", 0.003, 0.0, 1.0, 0.001, "sec", onUpdateAttack );
+	addModuleSlider( module, "release", 0.25, 0.0, 2.0, 0.01, "sec", onUpdateRelease );
+
+	// after adding sliders, walk up to the module to store the audioNode.
+	module = module.parentNode;
+
+	var audioNode = audioContext.createDynamicsCompressor();
+	audioNode.threshold.value = -24.0;
+	audioNode.knee.value = 20.0;
+	audioNode.ratio.value = 12.0;
+	audioNode.attack.value = 0.003;
+	audioNode.release.value = 0.25;
+	module.audioNode = audioNode;
+}
+
+function createConvolver() {
+	var module = createNewModule( "convolver", true, true );
+
+	module = module.parentNode;
+	module.className += " has-footer has-loop";
+
+	// Add footer element
+	var footer = document.createElement("footer");
+
+	var looper = document.createElement("div");
+	looper.className = "loop";
+	var label = document.createElement("label");
+	var check = document.createElement("input");
+	check.type = "checkbox";
+	check.onchange = onToggleNormalize;
+	label.appendChild(check);
+	label.appendChild(document.createTextNode(" norm"));
+	looper.appendChild(label);
+	footer.appendChild(looper);
+
+	var sel = document.createElement("select");
+	sel.className = "ab-source";
+	var opt = document.createElement("option");
+	opt.appendChild( document.createTextNode("irHall.ogg"));
+	sel.appendChild( opt );
+	opt = document.createElement("option");
+	opt.appendChild( document.createTextNode("irRoom.ogg"));
+	sel.appendChild( opt );
+	opt = document.createElement("option");
+	opt.appendChild( document.createTextNode("irParkingGarage.ogg"));
+	sel.appendChild( opt );
+	footer.appendChild( sel );
+	module.appendChild( footer );
+	
+	// Add select element and type options
+	var audioNode = audioContext.createConvolver();
+	audioNode.buffer = irHallBuffer;
+	module.audioNode = audioNode;
+}
+
+function createAnalyser() {
+	var module = createNewModule( "analyser", true, true );
+
+	var canvas = document.createElement( "canvas" );
+	canvas.height = "140";
+	canvas.width = "240";
+	canvas.className = "analyserCanvas";
+	canvas.style.webkitBoxReflect = "below 0px -webkit-gradient(linear, left top, left bottom, from(transparent), color-stop(0.9, transparent), to(white))"
+	canvas.style.backgroundImage = "url('img/analyser-bg.png')";
+	module.appendChild( canvas );
+
+	// after adding sliders, walk up to the module to store the audioNode.
+	module = module.parentNode;
+
+	var audioNode = audioContext.createAnalyser();
+	module.audioNode = audioNode;
+
+	audioNode.smoothingTimeConstant = "0.25"; // not much smoothing
+	audioNode.fftSize = 512;
+	audioNode.maxDecibels = 0;
+	module.onConnectInput = onAnalyserConnectInput;
+	analysers.push(module);	// Add to the list of analysers in the animation loop
+	module.drawingContext = canvas.getContext('2d');
 
 }
 
@@ -349,117 +521,76 @@ function onAnalyserConnectInput() {
 	}
 }
 
-function createDelayNode() {
-	var e=createNewNode("delay", true, true );
-	var delayNode = audioContext.createDelayNode();
-	e.audioNode = delayNode;
+function createBiquadFilter() {
+	var module = createNewModule( "biquadfilter", true, true );
+	addModuleSlider( module, "frequency", 440, 0, 20000, 1, "Hz", onUpdateFrequency );
+	addModuleSlider( module, "Q", 1, 1, 100, 0.1, "", onUpdateQ );
+	var gainSlider = addModuleSlider( module, "gain", 1.0, 0.0, 10.0, 0.01, "", onUpdateGain );
 
-	delayNode.delayTime.value = 0.5;
-	var ctl = createNewDialControl( 100, 5 );
-	ctl.style.left = "25px";
-	ctl.style.top = "50px";
-	ctl.onUpdateDial = onUpdateDelayTime;
-	e.appendChild( ctl );
+	module = module.parentNode;
+	module.className += " has-footer";
+
+	// The gain slider should be disabled by default
+	$( gainSlider ).slider( "option", "disabled", true );
+
+	// cache the gain slider for later use
+	module.gainSlider = gainSlider;
+
+	// Add footer element
+	var footer = document.createElement("footer");
+	var sel = document.createElement("select");
+	sel.className = "filter-type";
+	var opt = document.createElement("option");
+	opt.appendChild( document.createTextNode("lowpass"));
+	sel.appendChild( opt );
+	opt = document.createElement("option");
+	opt.appendChild( document.createTextNode("highpass"));
+	sel.appendChild( opt );
+	opt = document.createElement("option");
+	opt.appendChild( document.createTextNode("bandpass"));
+	sel.appendChild( opt );
+	opt = document.createElement("option");
+	opt.appendChild( document.createTextNode("lowshelf"));
+	sel.appendChild( opt );
+	opt = document.createElement("option");
+	opt.appendChild( document.createTextNode("highshelf"));
+	sel.appendChild( opt );
+	opt = document.createElement("option");
+	opt.appendChild( document.createTextNode("peaking"));
+	sel.appendChild( opt );
+	opt = document.createElement("option");
+	opt.appendChild( document.createTextNode("notch"));
+	sel.appendChild( opt );
+	opt = document.createElement("option");
+	opt.appendChild( document.createTextNode("allpass"));
+	sel.appendChild( opt );
+	sel.onchange = switchFilterTypes;
+	footer.appendChild( sel );
+	module.appendChild( footer );
+	
+	// Add select element and type options
+	var audioNode = audioContext.createBiquadFilter();
+	audioNode.frequency.value = 440.0;
+	audioNode.Q.value = 1.0;
+	audioNode.gain.value = 1.0;
+	module.audioNode = audioNode;
 }
 
-function createAnalyserNode() {
-	var e=createNewNode("analyser", true, true );
-	var analyser = audioContext.createAnalyser();
-	analyser.smoothingTimeConstant = "0.25"; // not much smoothing
-	e.audioNode = analyser;
-	var canvas = document.createElement( "canvas" );
-	canvas.style.left = "10px";
-	canvas.style.top = "35px";
-	canvas.style.position = "absolute";
-	canvas.height = "120";
-	canvas.width = "150";
-	canvas.className = "analyserCanvas"
-	canvas.style.webkitBoxReflect = "below 0px -webkit-gradient(linear, left top, left bottom, from(transparent), color-stop(0.9, transparent), to(white))"
-	
-	e.appendChild( canvas );
-	
-	e.onConnectInput = onAnalyserConnectInput;
-	analysers.push(e);	// Add to the list of analysers in the animation loop
-	e.drawingContext = canvas.getContext('2d');
-//	e.drawingContext.fillStyle = "blue";
-//	e.drawingContext.fillRect(0,0,150, 120);
-}
+function deleteModule() {
+	var moduleElement = this.parentNode;
 
-function createGainNode() {
-	var e=createNewNode("gain", true, true );
-	var gainNode = audioContext.createGainNode();
-	e.audioNode = gainNode;
-
-	gainNode.gain.value = 1.0;
-	var ctl = createNewDialControl( 100, 100 );
-	ctl.style.left = "25px";
-	ctl.style.top = "50px";
-	ctl.onUpdateDial = onUpdateABSNGain;
-	e.appendChild( ctl );
-}
-
-
-function createAudioNodeFromBuffer( buffer ) {
-	var e=createNewNode("audioBufferSource", false, true );
-
-	e.buffer=buffer;
-	
-	var ctl=document.createElement("button");
-	ctl.appendChild(document.createTextNode("play"));
-	ctl.onclick = hitplay;
-	e.appendChild(ctl);
-
-	ctl=document.createElement("button");
-	ctl.appendChild(document.createTextNode("stop"));
-	ctl.onclick = hitstop;
-	e.appendChild(ctl);
-
-	ctl=document.createElement("input");
-	ctl.type="checkbox";
-	ctl.name="loop";
-	ctl.value="loop";
-	ctl.addEventListener( "onclick", flipLoop );
-	e.appendChild(ctl);
-	e.appendChild(document.createTextNode("loop  "));
-
-	e.gain = 1.0;
-	var ctl = createNewDialControl( 100, 100 );
-	ctl.style.left = "25px";
-	ctl.style.top = "50px";
-	ctl.onUpdateDial = onUpdateABSNGain;
-	e.appendChild( ctl );
-
-
-}
-
-function flipNormalize(e) {
-	e.target.checked = !e.target.checked;
-	if (e.target.parentNode.audioNode)
-		e.target.parentNode.audioNode.normalize = e.target.checked;
-}
-
-function createConvolverNodeFromBuffer( buffer ) {
-	var e=createNewNode("convolverNode", true, true );
-	var convolver = audioContext.createConvolver();
-	
-	e.audioNode = convolver;
-	e.buffer=buffer;
-	convolver.buffer = buffer;
-	
-	ctl=document.createElement("input");
-	ctl.type="checkbox";
-	ctl.name="normalize";
-	ctl.value="normalize";
-	ctl.addEventListener( "onclick", flipNormalize );
-	e.appendChild(document.createElement("br"));
-	e.appendChild(ctl);
-	e.appendChild(document.createTextNode("normalize"));
+	// First disconnect the audio
+	disconnectNode( moduleElement );
+	// Then delete the visual element
+	moduleElement.parentNode.removeChild( moduleElement );
 }
 
 function downloadAudioFromURL( url ){
 	var request = new XMLHttpRequest();
   	request.open('GET', url, true);
   	request.responseType = 'arraybuffer';
+
+  	lastBufferLoaded = url;	// TODO: get last bit after the last /
 
   	// Decode asynchronously
   	request.onload = function() {
@@ -487,8 +618,9 @@ function downloadImpulseFromURL( url ){
 // Set up the page as a drop site for audio files. When an audio file is
 // dropped on the page, it will be auto-loaded as an AudioBufferSourceNode.
 function initDragDropOfAudioFiles() {
-	window.ondragover = function () { this.className = 'hover'; return false; };
-	window.ondragend = function () { this.className = ''; return false; };
+// TODO: might want this indicator back
+//	window.ondragover = function () { this.className = 'hover'; return false; };
+//	window.ondragend = function () { this.className = ''; return false; };
 	window.ondrop = function (e) {
   		this.className = '';
   		e.preventDefault();
@@ -496,17 +628,25 @@ function initDragDropOfAudioFiles() {
 	  var reader = new FileReader();
 	  reader.onload = function (event) {
 	  	audioContext.decodeAudioData( event.target.result, function(buffer) {
-	    		createAudioNodeFromBuffer(buffer);
+	    		createAudioBufferSource(buffer);
 	  	}, function(){alert("error loading!");} ); 
 
 	  };
 	  reader.onerror = function (event) {
 	    alert("Error: " + reader.error );
 	  };
+	  lastBufferLoaded = e.dataTransfer.files[0].name;
 	  reader.readAsArrayBuffer(e.dataTransfer.files[0]);
 	  return false;
 	};	
 }
+
+var drumsBuffer,
+    bassBuffer,
+    voiceBuffer,
+    irHallBuffer,
+    irDrumRoomBuffer,
+    irParkingGarageBuffer;
 
 // Initialization function for the page.
 function init() {
@@ -521,6 +661,25 @@ function init() {
     	alert('Oscillators not supported - you may need to run Chrome Canary.');
 
 	initDragDropOfAudioFiles();	// set up page as a drop site for audio files
+
+
+	var drumsRequest = new XMLHttpRequest();
+	drumsRequest.open("GET", "sounds/drums.ogg", true);
+	drumsRequest.responseType = "arraybuffer";
+	drumsRequest.onload = function() {
+	  audioContext.decodeAudioData( drumsRequest.response, function(buffer) { 
+	    drumsBuffer = buffer; } );
+	}
+	drumsRequest.send();
+	var irHallRequest = new XMLHttpRequest();
+	irHallRequest.open("GET", "sounds/irHall.ogg", true);
+	irHallRequest.responseType = "arraybuffer";
+	irHallRequest.onload = function() {
+	  audioContext.decodeAudioData( irHallRequest.response, function(buffer) { 
+	    irHallBuffer = buffer; } );
+	}
+	irHallRequest.send();
+
 
 	// create the one-and-only destination node for the context
 	var dest = document.getElementById("output");

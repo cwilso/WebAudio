@@ -4,18 +4,19 @@ var CANVAS_WIDTH = 150;
 var CANVAS_HEIGHT = 120;
 
 function updateAnalyser(e) {
-	var SPACER_WIDTH = 2;
-	var BAR_WIDTH = 2;
+	var SPACER_WIDTH = 1;
+	var BAR_WIDTH = 1;
 	var OFFSET = 100;
 	var CUTOFF = 23;
-	var numBars = Math.round(CANVAS_WIDTH / SPACER_WIDTH);
 	var ctx = e.drawingContext;
+	var canvas = ctx.canvas;
+	var numBars = Math.round(canvas.width / SPACER_WIDTH);
 	var freqByteData = new Uint8Array(e.audioNode.frequencyBinCount);
 
 	e.audioNode.getByteFrequencyData(freqByteData); 
 	//analyser.getByteTimeDomainData(freqByteData);
 
-	ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
   	ctx.fillStyle = '#F6D565';
   	ctx.lineCap = 'round';
 	var multiplier = e.audioNode.frequencyBinCount / numBars;
@@ -30,7 +31,7 @@ function updateAnalyser(e) {
 		magnitude = magnitude / multiplier;
 		var magnitude2 = freqByteData[i * multiplier];
     	ctx.fillStyle = "hsl( " + Math.round((i*360)/numBars) + ", 100%, 50%)";
-    	ctx.fillRect(i * SPACER_WIDTH, CANVAS_HEIGHT, BAR_WIDTH, -magnitude);
+    	ctx.fillRect(i * SPACER_WIDTH, canvas.height, BAR_WIDTH, -magnitude);
 	}
 }
 
