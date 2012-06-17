@@ -303,43 +303,46 @@ function breakSingleInputConnection( connections, index ) {
 // Disconnect a node from all other nodes connecting to it, or that it connects to.
 function disconnectNode( nodeElement ) {
 	//for all nodes we connect to,
-	for (var i=0; i<nodeElement.outputConnections.length; i++) {
-		var connector = nodeElement.outputConnections[i];
-		// find each dstElement and remove us from the dst.inputConnections,
-		var connections = connector.destination.inputConnections;
-		connections.splice( connections.indexOf(nodeElement), 1);
-		// and delete the line 
-		connector.line.parentNode.removeChild( connector.line );
+	if (nodeElement.outputConnections) {
+		for (var i=0; i<nodeElement.outputConnections.length; i++) {
+			var connector = nodeElement.outputConnections[i];
+			// find each dstElement and remove us from the dst.inputConnections,
+			var connections = connector.destination.inputConnections;
+			connections.splice( connections.indexOf(nodeElement), 1);
+			// and delete the line 
+			connector.line.parentNode.removeChild( connector.line );
+		}
+		// empty our outputConnections
+		nodeElement.outputConnections = null;
 	}
-	// empty our outputConnections
-	nodeElement.outputConnections = null;
 
 	// then call disconnect() on our audioNode to clear all outbound connections
 	// (this is what clear the audio connection, for all outbound connections at once)
 	nodeElement.audioNode.disconnect();
 
 	//for all nodes connecting to us - (aka in us.inputConnections)
-	for (var i=0; i<nodeElement.inputConnections.length; i++) {
-		var connector = nodeElement.inputConnections[i];
-		// this is trickier, because we'll have to destroy all their outbound connections.
-		// TODO: this will suck for source nodes.
-		var src = connector.source;
-		var connections = src.outputConnections;
-		// delete us from their .outputConnections,
-		connections.splice( connections.indexOf(nodeElement), 1);
-		// call disconnect() on the src,
-		src.audioNode.disconnect();
-		// if there's anything in their outputConnections, re.connect() those nodes.
-		// TODO: again, this will break due to src resetting.
-		for (var j=0; j<connections.length; j++)
-			src.audioNode.connect(connections[i].destination.audioNode);
+	if (nodeElement.inputConnections) {
+		for (var i=0; i<nodeElement.inputConnections.length; i++) {
+			var connector = nodeElement.inputConnections[i];
+			// this is trickier, because we'll have to destroy all their outbound connections.
+			// TODO: this will suck for source nodes.
+			var src = connector.source;
+			var connections = src.outputConnections;
+			// delete us from their .outputConnections,
+			connections.splice( connections.indexOf(nodeElement), 1);
+			// call disconnect() on the src,
+			src.audioNode.disconnect();
+			// if there's anything in their outputConnections, re.connect() those nodes.
+			// TODO: again, this will break due to src resetting.
+			for (var j=0; j<connections.length; j++)
+				src.audioNode.connect(connections[i].destination.audioNode);
 
-		// and delete the line 
-		connector.line.parentNode.removeChild( connector.line );
+			// and delete the line 
+			connector.line.parentNode.removeChild( connector.line );
+		}
+		// empty inputConnections
+		nodeElement.inputConnections = null;
 	}
-	// empty inputConnections
-	nodeElement.inputConnections = null;
-
 }
 
 function stopDraggingConnector(event) {
