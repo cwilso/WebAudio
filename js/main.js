@@ -1,22 +1,15 @@
 //TODO:  
 /* 
 
-Add glass hit file
-
-restart ABS
 restart osc
 
-select different ABS files
 "add new" in ABS
-
-select different convolver files
-"add new" in convolver
-
-
-drop convolver file on module
 drop sound file on ABS module
+
+"add new" in convolver
+drop convolver file on module
+
 wavetable
-*test - hide header if in frame
 
 */
 
@@ -25,6 +18,7 @@ var audioContext = null;
 var tempx=50, tempy=150;
 var idX = 0;
 var lastBufferLoaded = null;
+var buffers = new Array();
 
 function createNewModule( nodeType, input, output ) {
 	var e=document.createElement("div");
@@ -198,7 +192,7 @@ function onToggleLoop(event) {
 	while (e && !e.audioNode)
 		e = e.parentNode;
 	if (e)
-		e.audioNode.loop = checkbox.checked;
+		e.loop = checkbox.checked;
 }
 
 function onToggleNormalize(event) {
@@ -223,6 +217,24 @@ function switchOscillatorTypes(event) {
 	}
 }
 
+function switchAudioBuffer(event) {
+	var select = event.target;
+
+	var e = select.parentNode;
+	while (e && !e.classList.contains("module"))
+		e = e.parentNode;
+
+	if (e) {
+		if (select.selectedIndex == select.options.length-1) {
+			// TODO: open dialog, add new
+			alert( "Not yet implemented.");
+			return;
+		}
+		e.buffer = buffers[ select.selectedIndex ];
+	}
+}
+
+
 function switchFilterTypes(event) {
 	var select = event.target;
 	var fType = select.selectedIndex;
@@ -233,33 +245,59 @@ function switchFilterTypes(event) {
 	if (e) {
 		e.audioNode.type = fType;
 		if (fType>2 && fType<6) {
-			$( e.gainSlider ).slider( "option", "disabled", false );
+			e.children[0].children[3].classList.remove("disabled");
 		} else {
-			$( e.gainSlider ).slider( "option", "disabled", true );
+			e.children[0].children[3].classList.add("disabled");
 		}
 	}
 }
 
+function stopABSource( playButton ) {
+	//stop
+	playButton.isPlaying = false;
+	playButton.src = "img/ico-play.gif";
+	var e = playButton.parentNode;
+	while (e && !e.audioNode)
+		e = e.parentNode;
+	if (e)
+		e.audioNode.noteOff(0);
+
+}
+
 function onPlayABSource(event) {
 	var playButton = event.target;
-	if (playButton.isPlaying) {
-		//stop
-		playButton.isPlaying = false;
-		playButton.src = "img/ico-play.gif";
-		var e = playButton.parentNode;
-		while (e && !e.audioNode)
-			e = e.parentNode;
-		if (e)
-			e.audioNode.noteOff(0);
-	} else {
-		//play - TODO: fix up for second play
+	if (playButton.isPlaying)
+		stopABSource( playButton );
+	  else {
 		playButton.isPlaying = true;
 		playButton.src = "img/ico-stop.gif";
+
 		var e = playButton.parentNode;
-		while (e && !e.audioNode)
+		while (e && !e.classList.contains("module"))
 			e = e.parentNode;
-		if (e)
-			e.audioNode.noteOn(0);
+
+		if (!e)
+			return;
+
+		// if there's already a note playing, cut it off.
+		if (e.audioNode) {
+			e.audioNode.noteOff(0);
+			e.audioNode.disconnect();
+			e.audioNode = null;
+		}
+		
+		// create a new BufferSource, set it to the buffer and connect it.
+		var n = e.audioNode = audioContext.createBufferSource();
+		n.loop = e.loop;
+		n.buffer = e.buffer;
+	
+		if (e.outputConnections) {
+			e.outputConnections.forEach(function(connection){  
+			                      n.connect( connection.destination.audioNode ); });
+		}
+		e.audioNode.noteOn(0);
+		var delay = Math.floor( e.buffer.duration * 1000) + 1;
+		window.setTimeout( stopABSource, delay, playButton );
 	}
 }
 
@@ -339,6 +377,9 @@ function createOscillator() {
 	oscNode.detune = 0;
 	oscNode.type = oscNode.SINE;
 	osc.audioNode = oscNode;
+
+	if (this.event)
+		this.event.preventDefault();
 }
 
 function createGain() {
@@ -351,18 +392,24 @@ function createGain() {
 	var gainNode = audioContext.createGainNode();
 	gainNode.gain.value = 1.0;
 	module.audioNode = gainNode;
+
+	if (this.event)
+		this.event.preventDefault();
 }
 
 function createDelay() {
 	var module = createNewModule( "delay", true, true );
-	addModuleSlider( module, "delay time", 0.5, 0.0, 10.0, 0.01, "sec", onUpdateDelay );
+	addModuleSlider( module, "delay time", 0.2, 0.0, 10.0, 0.01, "sec", onUpdateDelay );
 
 	// after adding sliders, walk up to the module to store the audioNode.
 	module = module.parentNode;
 
 	var delayNode = audioContext.createDelayNode();
-	delayNode.delayTime.value = 0.5;
+	delayNode.delayTime.value = 0.2;
 	module.audioNode = delayNode;
+
+	if (this.event)
+		this.event.preventDefault();
 }
 
 function createAudioBufferSource( buffer ) {
@@ -396,16 +443,21 @@ function createAudioBufferSource( buffer ) {
 	sel.className = "ab-source";
 	var opt = document.createElement("option");
 
-	if (buffer) {	// TODO:  NASTY HACK!  USING A GLOBAL!
+	if (buffer) {	// TODO:  NASTY HACK!  USING A GLOBAL! Should also add dropped files for all buffers.
 		opt.appendChild( document.createTextNode( lastBufferLoaded ));
 		sel.appendChild( opt );
 		opt = document.createElement("option");
+		buffers.splice(0,0,buffer);
+		module.buffer = buffer;
 	}
 
+	opt.appendChild( document.createTextNode("glass-hit.ogg"));
+	sel.appendChild( opt );
+	opt = document.createElement("option");
 	opt.appendChild( document.createTextNode("drums.ogg"));
 	sel.appendChild( opt );
 	opt = document.createElement("option");
-	opt.appendChild( document.createTextNode("glass.ogg"));
+	opt.appendChild( document.createTextNode("noise.ogg"));
 	sel.appendChild( opt );
 	opt = document.createElement("option");
 	opt.appendChild( document.createTextNode("voice.ogg"));
@@ -416,13 +468,19 @@ function createAudioBufferSource( buffer ) {
 	opt = document.createElement("option");
 	opt.appendChild( document.createTextNode("guitar.ogg"));
 	sel.appendChild( opt );
+	opt = document.createElement("option");
+	opt.appendChild( document.createTextNode("  add new..."));
+	sel.appendChild( opt );
+
+	sel.onchange = switchAudioBuffer;
 	footer.appendChild( sel );
 	module.appendChild( footer );
 	
 	// Add select element and type options
-	var sourceNode = audioContext.createBufferSource();
-	sourceNode.buffer = buffer ? buffer : drumsBuffer;
-	module.audioNode = sourceNode;
+	module.buffer = buffer ? buffer : glassBuffer;
+
+	if (this.event)
+		this.event.preventDefault();
 	return module;
 }
 
@@ -445,6 +503,8 @@ function createDynamicsCompressor() {
 	audioNode.attack.value = 0.003;
 	audioNode.release.value = 0.25;
 	module.audioNode = audioNode;
+	if (this.event)
+		this.event.preventDefault();
 }
 
 function createConvolver() {
@@ -485,6 +545,8 @@ function createConvolver() {
 	var audioNode = audioContext.createConvolver();
 	audioNode.buffer = irHallBuffer;
 	module.audioNode = audioNode;
+	if (this.event)
+		this.event.preventDefault();
 }
 
 function createAnalyser() {
@@ -511,6 +573,8 @@ function createAnalyser() {
 	analysers.push(module);	// Add to the list of analysers in the animation loop
 	module.drawingContext = canvas.getContext('2d');
 
+	if (this.event)
+		this.event.preventDefault();
 }
 
 function onAnalyserConnectInput() {
@@ -526,12 +590,11 @@ function createBiquadFilter() {
 	addModuleSlider( module, "frequency", 440, 0, 20000, 1, "Hz", onUpdateFrequency );
 	addModuleSlider( module, "Q", 1, 1, 100, 0.1, "", onUpdateQ );
 	var gainSlider = addModuleSlider( module, "gain", 1.0, 0.0, 10.0, 0.01, "", onUpdateGain );
+	module.children[3].classList.add("disabled");
+	// gainSlider.classList.add("disabled");
 
 	module = module.parentNode;
 	module.className += " has-footer";
-
-	// The gain slider should be disabled by default
-	$( gainSlider ).slider( "option", "disabled", true );
 
 	// cache the gain slider for later use
 	module.gainSlider = gainSlider;
@@ -574,6 +637,9 @@ function createBiquadFilter() {
 	audioNode.Q.value = 1.0;
 	audioNode.gain.value = 1.0;
 	module.audioNode = audioNode;
+
+	if (this.event)
+		this.event.preventDefault();
 }
 
 function deleteModule() {
@@ -644,9 +710,90 @@ function initDragDropOfAudioFiles() {
 var drumsBuffer,
     bassBuffer,
     voiceBuffer,
+    noiseBuffer,
+    guitarBuffer,
     irHallBuffer,
     irDrumRoomBuffer,
     irParkingGarageBuffer;
+
+function startLoadingSounds() {
+	var glassRequest = new XMLHttpRequest();
+	glassRequest.open("GET", "sounds/glass-hit.ogg", true);
+	glassRequest.responseType = "arraybuffer";
+	glassRequest.onload = function() {
+	  audioContext.decodeAudioData( glassRequest.response, function(buffer) { 
+	    	glassBuffer = buffer; 
+	    	buffers[0]= glassBuffer;
+		} );
+	}
+	glassRequest.send();
+
+	drumRequest = new XMLHttpRequest();
+	drumRequest.open("GET", "sounds/drums.ogg", true);
+	drumRequest.responseType = "arraybuffer";
+	drumRequest.onload = function() {
+	  audioContext.decodeAudioData( drumRequest.response, function(buffer) { 
+	    	drumsBuffer = buffer; 
+	    	buffers[1]= drumsBuffer;
+		} );
+	}
+	drumRequest.send();
+
+
+	noiseRequest = new XMLHttpRequest();
+	noiseRequest.open("GET", "sounds/noise.ogg", true);
+	noiseRequest.responseType = "arraybuffer";
+	noiseRequest.onload = function() {
+	  audioContext.decodeAudioData( noiseRequest.response, function(buffer) { 
+	    	noiseBuffer = buffer; 
+	    	buffers[2]= noiseBuffer;
+		} );
+	}
+	noiseRequest.send();
+
+	voiceRequest = new XMLHttpRequest();
+	voiceRequest.open("GET", "sounds/voice.ogg", true);
+	voiceRequest.responseType = "arraybuffer";
+	voiceRequest.onload = function() {
+	  audioContext.decodeAudioData( voiceRequest.response, function(buffer) { 
+	    	voiceBuffer = buffer; 
+	    	buffers[3]= voiceBuffer;
+		} );
+	}
+	voiceRequest.send();
+
+	bassRequest = new XMLHttpRequest();
+	bassRequest.open("GET", "sounds/bass.ogg", true);
+	bassRequest.responseType = "arraybuffer";
+	bassRequest.onload = function() {
+	  audioContext.decodeAudioData( bassRequest.response, function(buffer) { 
+	    	bassBuffer = buffer; 
+	    	buffers[4]= bassBuffer;
+		} );
+	}
+	bassRequest.send();
+
+	guitarRequest = new XMLHttpRequest();
+	guitarRequest.open("GET", "sounds/guitar.ogg", true);
+	guitarRequest.responseType = "arraybuffer";
+	guitarRequest.onload = function() {
+	  audioContext.decodeAudioData( guitarRequest.response, function(buffer) { 
+	    	guitarBuffer = buffer; 
+	    	buffers[5]= guitarBuffer;
+		} );
+	}
+	guitarRequest.send();
+
+
+	var irHallRequest = new XMLHttpRequest();
+	irHallRequest.open("GET", "sounds/irHall.ogg", true);
+	irHallRequest.responseType = "arraybuffer";
+	irHallRequest.onload = function() {
+	  audioContext.decodeAudioData( irHallRequest.response, function(buffer) { 
+	    irHallBuffer = buffer; } );
+	}
+	irHallRequest.send();
+}
 
 // Initialization function for the page.
 function init() {
@@ -662,24 +809,7 @@ function init() {
 
 	initDragDropOfAudioFiles();	// set up page as a drop site for audio files
 
-
-	var drumsRequest = new XMLHttpRequest();
-	drumsRequest.open("GET", "sounds/drums.ogg", true);
-	drumsRequest.responseType = "arraybuffer";
-	drumsRequest.onload = function() {
-	  audioContext.decodeAudioData( drumsRequest.response, function(buffer) { 
-	    drumsBuffer = buffer; } );
-	}
-	drumsRequest.send();
-	var irHallRequest = new XMLHttpRequest();
-	irHallRequest.open("GET", "sounds/irHall.ogg", true);
-	irHallRequest.responseType = "arraybuffer";
-	irHallRequest.onload = function() {
-	  audioContext.decodeAudioData( irHallRequest.response, function(buffer) { 
-	    irHallBuffer = buffer; } );
-	}
-	irHallRequest.send();
-
+	startLoadingSounds();
 
 	// create the one-and-only destination node for the context
 	var dest = document.getElementById("output");
