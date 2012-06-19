@@ -144,7 +144,7 @@ function startDraggingConnector(event) {
   	dragObj.cursorStartY = y;
 
 	// remember if this is an input or output node, so we can match
-	dragObj.input = (dragObj.elNode.className.indexOf("inputconnector") != -1);
+	dragObj.originIsInput = dragObj.elNode.classList.contains("node-input");
 
 	dragObj.elNode.unlitClassname = dragObj.elNode.className;
 	dragObj.elNode.className += " canConnect";
@@ -190,6 +190,10 @@ function whileDraggingConnector(event) {
 	    // if this is the green or red button, use its parent.
 	    if (toElem.classList.contains("node-button"))
 	    	toElem = toElem.parentNode;
+
+	    // if we're over our originating node, do nothing.
+	    if (toElem == dragObj.elemNode)
+	    	return;
 		
 		// If we used to be lighting up a node, but we're not over it anymore,
 		// unlight it.
@@ -201,7 +205,7 @@ function whileDraggingConnector(event) {
 		// light up connector point underneath, if any
 		if (toElem.classList.contains("node")) {
 			if (!dragObj.lastLit || (dragObj.lastLit != toElem )) {
-				if (dragObj.input) {
+				if (dragObj.originIsInput) {
 					if (toElem.classList.contains("node-output")) {
 						toElem.unlitClassname = toElem.className;
 						toElem.className += " canConnect";
@@ -242,7 +246,7 @@ function connectNodes( src, dst ) {
 	src.outputConnections.push(connector);
 	
 	//Make sure the connector line points go from src->dest (x1->x2)
-	if (!dragObj.input) { // need to flip
+	if (!dragObj.originIsInput) { // need to flip
 		var shape = connectorShape;
 		var x = shape.getAttributeNS(null, "x2");
 		var y = shape.getAttributeNS(null, "y2");
@@ -286,12 +290,14 @@ function breakSingleInputConnection( connections, index ) {
 
 		// delete us from their .outputConnections,
 		src.outputConnections.splice( src.outputConnections.indexOf( connector.destination ), 1);
-		// call disconnect() on the src,
-		src.audioNode.disconnect();
-		// if there's anything left in their outputConnections, re.connect() those nodes.
-		// TODO: again, this will break due to src resetting.
-		for (var j=0; j<src.outputConnections.length; j++)
-			src.audioNode.connect( src.outputConnections[j].destination.audioNode);
+		if (src.audioNode) {	// they may not have an audioNode, if they're a BSN or an Oscillator
+			// call disconnect() on the src,
+			src.audioNode.disconnect();
+			// if there's anything left in their outputConnections, re.connect() those nodes.
+			// TODO: again, this will break due to src resetting.
+			for (var j=0; j<src.outputConnections.length; j++)
+				src.audioNode.connect( src.outputConnections[j].destination.audioNode);
+		}
 
 		// and delete the line 
 		connector.line.parentNode.removeChild( connector.line );
@@ -318,7 +324,8 @@ function disconnectNode( nodeElement ) {
 
 	// then call disconnect() on our audioNode to clear all outbound connections
 	// (this is what clear the audio connection, for all outbound connections at once)
-	nodeElement.audioNode.disconnect();
+	if (nodeElement.audioNode)	// we may not have an audioNode, if we're a BSN or an Oscillator
+		nodeElement.audioNode.disconnect();
 
 	//for all nodes connecting to us - (aka in us.inputConnections)
 	if (nodeElement.inputConnections) {
@@ -330,12 +337,15 @@ function disconnectNode( nodeElement ) {
 			var connections = src.outputConnections;
 			// delete us from their .outputConnections,
 			connections.splice( connections.indexOf(nodeElement), 1);
-			// call disconnect() on the src,
-			src.audioNode.disconnect();
-			// if there's anything in their outputConnections, re.connect() those nodes.
-			// TODO: again, this will break due to src resetting.
-			for (var j=0; j<connections.length; j++)
-				src.audioNode.connect(connections[i].destination.audioNode);
+
+			if (src.audioNode) {	// they may not have an audioNode, if they're a BSN or an Oscillator
+				// call disconnect() on the src,
+				src.audioNode.disconnect();
+				// if there's anything in their outputConnections, re.connect() those nodes.
+				// TODO: again, this will break due to src resetting.
+				for (var j=0; j<connections.length; j++)
+					src.audioNode.connect(connections[i].destination.audioNode);
+			}
 
 			// and delete the line 
 			connector.line.parentNode.removeChild( connector.line );
@@ -384,7 +394,7 @@ function stopDraggingConnector(event) {
 		var str=""+toElem.className;
 		
 		// If we're over a connection point, make the connection
-		if (dragObj.input) {
+		if (dragObj.originIsInput) {
 			if (toElem.classList.contains("node-output")) {
 				// can connect!
 				connectNodes(toElem, dragObj.elNode);

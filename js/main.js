@@ -105,7 +105,17 @@ function addModuleSlider( element, label, ivalue, imin, imax, stepUnits, units, 
 
 
 function onUpdateDetune(event, ui) {
-	updateSlider(event, ui).audioNode.detune.value = ui.value;
+	var e = updateSlider(event, ui);
+	e.oscillatorDetune = ui.value;
+	if (e.audioNode)
+		e.audioNode.detune.value = ui.value;
+}
+
+function onUpdateOscillatorFrequency(event, ui) {
+	var e = updateSlider(event, ui);
+	e.oscillatorFrequency = ui.value;
+	if (e.audioNode)
+		e.audioNode.frequency.value = ui.value;
 }
 
 function onUpdateFrequency(event, ui) {
@@ -168,26 +178,36 @@ function onPlayOscillator(event) {
 		playButton.isPlaying = false;
 		playButton.src = "img/ico-play.gif";
 		var e = playButton.parentNode;
-		while (e && !e.audioNode)
+		while (e && !e.classList.contains("module"))
 			e = e.parentNode;
-		if (e)
+		if (e && e.audioNode) {
 			e.audioNode.noteOff(0);
+			e.audioNode = null;
+		}
 	} else {
-		//play - TODO: fix up for second play
 		playButton.isPlaying = true;
 		playButton.src = "img/ico-stop.gif";
 		var e = playButton.parentNode;
-		while (e && !e.audioNode)
+		while (e && !e.classList.contains("module"))
 			e = e.parentNode;
-		if (e)
-			e.audioNode.noteOn(0);
+		if (e) {
+			var oscNode = audioContext.createOscillator();
+			oscNode.frequency.value = e.oscillatorFrequency;
+			oscNode.detune.value = e.oscillatorDetune;
+			oscNode.type = e.oscillatorType;
+			e.audioNode = oscNode;
+			if (e.outputConnections) {
+				e.outputConnections.forEach(function(connection){  
+				    oscNode.connect( connection.destination.audioNode ); });
+			}
+			oscNode.noteOn(0);
+		}
 	}
 }
 
 function onToggleLoop(event) {
 	var checkbox = event.target;
 	
-//TODO: fix up for second play
 	var e = checkbox.parentNode;
 	while (e && !e.audioNode)
 		e = e.parentNode;
@@ -213,7 +233,13 @@ function switchOscillatorTypes(event) {
 		e = e.parentNode;
 	if (e) {
 		// TODO: wavetable!
-		e.audioNode.type = select.selectedIndex;
+
+		//cache the type
+		e.oscillatorType = select.selectedIndex;
+
+		// if we have a playing oscillator, go ahead and switch it live
+		if (e.audioNode)
+			e.audioNode.type = select.selectedIndex;
 	}
 }
 
@@ -335,7 +361,7 @@ function hitstop(e) {
 
 function createOscillator() {
 	var osc = createNewModule( "oscillator", false, true );
-	addModuleSlider( osc, "frequency", 440, 0, 8000, 1, "Hz", onUpdateFrequency );
+	addModuleSlider( osc, "frequency", 440, 0, 8000, 1, "Hz", onUpdateOscillatorFrequency );
 	addModuleSlider( osc, "detune", 0, -1200, 1200, 1, "cents", onUpdateDetune );
 
 	var play = document.createElement("img");
@@ -371,12 +397,10 @@ function createOscillator() {
 	footer.appendChild( sel );
 	osc.appendChild( footer );
 	
-	// Add select element and type options
-	var oscNode = audioContext.createOscillator();
-	oscNode.frequency = 440;
-	oscNode.detune = 0;
-	oscNode.type = oscNode.SINE;
-	osc.audioNode = oscNode;
+	// Cache default values on node element
+	osc.oscillatorFrequency = 440;
+	osc.oscillatorDetune = 0;
+	osc.oscillatorType = 0;			// SINE
 
 	if (this.event)
 		this.event.preventDefault();
