@@ -1,8 +1,6 @@
 //TODO:  
 /* 
 
-restart osc
-
 "add new" in ABS
 drop sound file on ABS module
 
@@ -209,7 +207,7 @@ function onToggleLoop(event) {
 	var checkbox = event.target;
 	
 	var e = checkbox.parentNode;
-	while (e && !e.audioNode)
+	while (e && !e.classList.contains("module"))
 		e = e.parentNode;
 	if (e)
 		e.loop = checkbox.checked;
@@ -283,9 +281,16 @@ function stopABSource( playButton ) {
 	playButton.isPlaying = false;
 	playButton.src = "img/ico-play.gif";
 	var e = playButton.parentNode;
-	while (e && !e.audioNode)
+	while (e && !e.classList.contains("module"))
 		e = e.parentNode;
-	if (e)
+
+	if ( !e )
+		return;
+	if ( e.stopTimer ) {
+		window.clearTimeout(e.stopTimer);
+		e.stopTimer = 0;
+	}
+	if ( e.audioNode )
 		e.audioNode.noteOff(0);
 
 }
@@ -323,7 +328,8 @@ function onPlayABSource(event) {
 		}
 		e.audioNode.noteOn(0);
 		var delay = Math.floor( e.buffer.duration * 1000) + 1;
-		window.setTimeout( stopABSource, delay, playButton );
+		if (!e.loop)
+			e.stopTimer = window.setTimeout( stopABSource, delay, playButton );
 	}
 }
 
