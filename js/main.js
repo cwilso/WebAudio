@@ -427,6 +427,30 @@ function createGain() {
 		this.event.preventDefault();
 }
 
+function gotStream(stream) {
+    // Create an AudioNode from the stream.
+//    realAudioInput = audioContext.createMediaStreamSource(stream);
+    this.audioNode = audioContext.createMediaStreamSource(stream);
+}
+
+function createLiveInput() {
+	var module = createNewModule( "live input", false, true );
+
+	// after adding sliders, walk up to the module to store the audioNode.
+	module = module.parentNode;
+
+    if (!navigator.webkitGetUserMedia)
+        return(alert("Error: getUserMedia not supported!"));
+
+    navigator.webkitGetUserMedia({audio:true}, gotStream.bind(module), function(e) {
+            alert('Error getting audio');
+            console.log(e);
+        });
+
+	if (this.event)
+		this.event.preventDefault();
+}
+
 function createDelay() {
 	var module = createNewModule( "delay", true, true );
 	addModuleSlider( module, "delay time", 0.2, 0.0, 10.0, 0.01, "sec", onUpdateDelay );
