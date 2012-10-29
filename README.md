@@ -12,3 +12,6 @@ To install the application locally,
 for your operating system, install it, point it at a check-out of this
 repo and view the application on a local port using the latest version of
 Google Chrome.
+
+Alternately, you can simply host the directory structure on a local web server, and load index.html.  
+(The app cannot be run from file:// as XMLHTTPRequest doesn't work.)
