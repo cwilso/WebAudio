@@ -1,6 +1,7 @@
 <!doctype html>
 <html class="no-js" lang="en">
 <head>
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<meta charset="utf-8" />
 	<title>Web Audio Playground</title>
 
@@ -11,6 +12,7 @@
 
 	<script src="js/jquery-1.7.2.min.js"></script>
 	<script src="js/jquery-ui-1.8.21.custom.min.js"></script>
+	<script src="js/pointerevents.js"></script>
 	<script src="js/ui.js"></script>
 	<script src="js/main.js"></script>
 	<script src="js/dragging.js"></script>
@@ -31,11 +33,11 @@
 					<a href="#">Add Audio Source</a>
 					<div class="sub-menu">
 						<ul>
-							<li><a href="#" onclick="createAudioBufferSource(null)">Audio Buffer Source</a></li>
+							<li><a href="#" id="cabs">Audio Buffer Source</a></li>
 <!--
 							<li><a href="#">Audio Buffer Source From URL</a></li>
--->							<li><a href="#" onclick="createOscillator()">Oscillator</a></li>
-							<li><a href="#" onclick="createLiveInput()">Live Input</a></li>
+-->							<li><a href="#" id="cosc">Oscillator</a></li>
+							<li><a href="#" id="cliv">Live Input</a></li>
 						</ul>
 					</div>	
 				</li>
@@ -43,15 +45,12 @@
 					<a href="#">Add Module</a>
 					<div class="sub-menu">
 						<ul>
-							<li><a href="#" onclick="createBiquadFilter()">Biquad Filter</a></li>
-							<li><a href="#" onclick="createDelay()">Delay Node</a></li>
-							<li><a href="#" onclick="createDynamicsCompressor()">Dynamics Compressor</a></li>
-							<li><a href="#" onclick="createGain()">Gain Node</a></li>
-							<li><a href="#" onclick="createConvolver()">Convolver</a></li>
-<!--
-							<li><a href="#">Convolver From Impulse File URL</a></li>
--->
-							<li><a href="#" onclick="createAnalyser()">Analyser</a></li>
+							<li><a href="#" id="cbqf">Biquad Filter</a></li>
+							<li><a href="#" id="cdel">Delay Node</a></li>
+							<li><a href="#" id="cdyc">Dynamics Compressor</a></li>
+							<li><a href="#" id="cgai">Gain Node</a></li>
+							<li><a href="#" id="ccon">Convolver</a></li>
+							<li><a href="#" id="cana">Analyser</a></li>
 						</ul>
 					</div>	
 				</li>

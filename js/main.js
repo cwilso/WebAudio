@@ -33,7 +33,8 @@ function createNewModule( nodeType, input, output ) {
 		tempy = 100;
 
 	e.setAttribute("audioNodeType", nodeType );
-	e.onmousedown=startDraggingNode;
+    e.addEventListener("mousedown", skipDefault,   false);
+	e.addEventListener( 'pointerdown', startDraggingNode, false );
 	var content = document.createElement("div");
 	content.className="content";
 	e.appendChild(content);
@@ -45,7 +46,8 @@ function createNewModule( nodeType, input, output ) {
 	if (input) {
 		var i=document.createElement("div");
 		i.className="node node-input ";
-		i.onmousedown=startDraggingConnector;
+	    i.addEventListener( "mousedown", skipDefault, true );
+		i.addEventListener( 'pointerdown', startDraggingConnector, false );
 		i.innerHTML = "<span class='node-button'>&nbsp;</span>";
 		e.appendChild(i);
 		e.inputs = i;
@@ -54,7 +56,8 @@ function createNewModule( nodeType, input, output ) {
 	if (output) {
 		var i=document.createElement("div");
 		i.className="node node-output";
-		i.onmousedown=startDraggingConnector;
+	    i.addEventListener( "mousedown", skipDefault, true );
+		i.addEventListener( 'pointerdown', startDraggingConnector, false );
 		i.innerHTML = "<span class='node-button'>&nbsp;</span>";
 		e.appendChild(i);
 		e.outputs = i;
@@ -466,6 +469,10 @@ function createDelay() {
 		this.event.preventDefault();
 }
 
+function createAudioBufferSourceFromMenu(event) {
+	createAudioBufferSource(null);
+}
+
 function createAudioBufferSource( buffer ) {
 	var module = createNewModule( "audiobuffersource", false, true );
 
@@ -849,6 +856,14 @@ function startLoadingSounds() {
 	irHallRequest.send();
 }
 
+function setClickHandler( id, handler ) {
+    var el = document.getElementById( id );
+    if (el) {
+	    el.addEventListener( "mousedown", skipDefault, true );
+		el.addEventListener( "pointerdown", handler, false );
+	}
+}
+
 // Initialization function for the page.
 function init() {
   	try {
@@ -858,9 +873,6 @@ function init() {
     	alert('Web Audio API is not supported in this browser.');
   	}
 
-  	if (!audioContext.createOscillator)
-    	alert('Oscillators not supported - you may need to run Chrome Canary.');
-
 	initDragDropOfAudioFiles();	// set up page as a drop site for audio files
 
 	startLoadingSounds();
@@ -869,6 +881,19 @@ function init() {
 	var dest = document.getElementById("output");
 	dest.audioNode = audioContext.destination;
 //	stringifyAudio();
+
+	setClickHandler( "cabs", createAudioBufferSourceFromMenu );
+	setClickHandler( "cosc", createOscillator );
+	setClickHandler( "cliv", createLiveInput );
+	setClickHandler( "cbqf", createBiquadFilter );
+	setClickHandler( "cdel", createDelay );
+	setClickHandler( "cdyc", createDynamicsCompressor );
+	setClickHandler( "cgai", createGain );
+	setClickHandler( "ccon", createConvolver );
+	setClickHandler( "cana", createAnalyser );
+
+//	if (navigator.userAgent.indexOf("Android") != -1)
+//		document.body.style.zoom = "2";
 }
 
 window.addEventListener('load', init, false);

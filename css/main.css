@@ -205,7 +205,7 @@ body {
 	z-index: 100;
 }
 #output .node {
-	left: -11px;
+	left: -18px;
 	margin-top: -11px;
 	position: absolute;
 	top: 50%;
@@ -236,18 +236,18 @@ body {
 	border-radius: 50%;
 	box-shadow: 0 0 3px rgba(0,0,0, .5);
 	cursor: pointer;
-	height: 22px;
+	height: 34px;
 	position: relative;
-	width: 22px;
+	width: 34px;
 }
 .node span {
 	border-radius: 50%;
 	display: block;
-	height: 12px;
+	height: 24px;
 	left: 5px;
 	position: absolute;
 	top: 5px;
-	width: 12px;
+	width: 24px;
 }
 .node-input span {
 	background: #67a90d;
@@ -292,14 +292,14 @@ body {
 /* Module nodes */
 .module .node {
 	position: absolute;
-	margin-top: -11px;
+	margin-top: -16px;
 	top: 50%;
 }
 .module .node-input {
-	left: -11px;
+	left: -18px;
 }
 .module .node-output {
-	right: -11px;
+	right: -18px;
 }
 
 /* Module close */
