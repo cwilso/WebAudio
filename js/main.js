@@ -442,10 +442,13 @@ function createLiveInput() {
 	// after adding sliders, walk up to the module to store the audioNode.
 	module = module.parentNode;
 
-    if (!navigator.webkitGetUserMedia)
+    var gUM = navigator.getUserMedia ||
+              navigator.webkitGetUserMedia ||
+              navigator.mozGetUserMedia;
+    if (!gUM)
         return(alert("Error: getUserMedia not supported!"));
 
-    navigator.webkitGetUserMedia({audio:true}, gotStream.bind(module), function(e) {
+    gUM({audio:true}, gotStream.bind(module), function(e) {
             alert('Error getting audio');
             console.log(e);
         });
@@ -866,12 +869,15 @@ function setClickHandler( id, handler ) {
 
 // Initialization function for the page.
 function init() {
-  	try {
-    	audioContext = new webkitAudioContext();
-  	}
-  	catch(e) {
-    	alert('Web Audio API is not supported in this browser.');
-  	}
+    try {
+      audioContext = new AudioContext();
+    } catch(e) {
+      try {
+        audioContext = new webkitAudioContext();
+      } catch(e) {
+        alert('Web Audio API is not supported in this browser.');
+      }
+    }
 
 	initDragDropOfAudioFiles();	// set up page as a drop site for audio files
 

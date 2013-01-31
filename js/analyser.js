@@ -36,7 +36,11 @@ function updateAnalyser(e) {
 }
 
 function updateAnalysers(time) {
-  	window.webkitRequestAnimationFrame( updateAnalysers );
+    var rAF = window.requestAnimationFrame ||
+              window.webkitRequestAnimationFrame ||
+              window.mozRequestAnimationFrame ||
+              window.msRequestAnimationFrame;
+    rAF( updateAnalysers );
 
 	for (var i = 0; i < analysers.length; i++)
 		updateAnalyser(analysers[i]);
