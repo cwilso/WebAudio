@@ -76,7 +76,7 @@ function createNewModule( nodeType, input, output ) {
 
 function addModuleSlider( element, label, ivalue, imin, imax, stepUnits, units, onUpdate ) {
 	var group = document.createElement("div");
-	group.className="control-group";
+	//group.className="control-group";
 
 	var info = document.createElement("div");
 	info.className="slider-info";
@@ -96,80 +96,92 @@ function addModuleSlider( element, label, ivalue, imin, imax, stepUnits, units, 
 
 	group.appendChild(info);
 
+/*
 	var slider = document.createElement("div");
 	slider.className="slider";
 	group.appendChild(slider);
 
 	element.appendChild(group);
 	return $( slider ).slider( { slide: onUpdate, value: ivalue, min: imin, max: imax, step: stepUnits } );
+*/
+	var slider = document.createElement("input");
+	slider.type="range";
+	slider.min = imin;
+	slider.max = imax;
+	slider.value = ivalue;
+	slider.step = stepUnits;
+	slider.oninput = onUpdate;
+	group.appendChild(slider);
+
+	element.appendChild(group);
+	return slider;
+
 }
 
 
-function onUpdateDetune(event, ui) {
-	var e = updateSlider(event, ui);
-	e.oscillatorDetune = ui.value;
+function onUpdateDetune(event) {
+	var e = updateSlider(event);
+	e.oscillatorDetune = event.target.value;
 	if (e.audioNode)
-		e.audioNode.detune.value = ui.value;
+		e.audioNode.detune.value = e.oscillatorDetune;
 }
 
-function onUpdateOscillatorFrequency(event, ui) {
-	var e = updateSlider(event, ui);
-	e.oscillatorFrequency = ui.value;
+function onUpdateOscillatorFrequency(event) {
+	var e = updateSlider(event);
+	e.oscillatorFrequency = event.target.value;
 	if (e.audioNode)
-		e.audioNode.frequency.value = ui.value;
+		e.audioNode.frequency.value = e.oscillatorFrequency;
 }
 
-function onUpdateFrequency(event, ui) {
-	updateSlider(event, ui).audioNode.frequency.value = ui.value;
+function onUpdateFrequency(event) {
+	updateSlider(event).audioNode.frequency.value = event.target.value;
 }
 
-function onUpdateGain(event, ui) {
-	updateSlider(event, ui).audioNode.gain.value = ui.value;
+function onUpdateGain(event) {
+	updateSlider(event).audioNode.gain.value = event.target.value;
 }
 
 function onUpdateDelay(event, ui) {
-	updateSlider(event, ui).audioNode.delayTime.value = ui.value;
+	updateSlider(event).audioNode.delayTime.value = event.target.value;
 }
 
 function onUpdateThreshold(event, ui) {
-	updateSlider(event, ui).audioNode.threshold.value = ui.value;
+	updateSlider(event).audioNode.threshold.value = event.target.value;
 }
 
 function onUpdateKnee(event, ui) {
-	updateSlider(event, ui).audioNode.knee.value = ui.value;
+	updateSlider(event).audioNode.knee.value = event.target.value;
 }
 
 function onUpdateRatio(event, ui) {
-	updateSlider(event, ui).audioNode.ratio.value = ui.value;
+	updateSlider(event).audioNode.ratio.value = event.target.value;
 }
 
 function onUpdateAttack(event, ui) {
-	updateSlider(event, ui).audioNode.attack.value = ui.value;
+	updateSlider(event).audioNode.attack.value = event.target.value;
 }
 
 function onUpdateRelease(event, ui) {
-	updateSlider(event, ui).audioNode.release.value = ui.value;
+	updateSlider(event).audioNode.release.value = event.target.value;
 }
 
 function onUpdateQ(event, ui) {
-	updateSlider(event, ui).audioNode.Q.value = ui.value;
+	updateSlider(event).audioNode.Q.value = event.target.value;
 }
 
-function updateSlider(event, ui, callback) {
+function updateSlider(event) {
 	var e = event.target;
-	var group = null;
-	while (!e.classList.contains("module")) {
-		if (e.classList.contains("control-group"))
-			group = e;
-		e = e.parentNode;
-	}
 
 	//TODO: yes, this is lazy coding, and fragile.
-	var output = group.children[0].children[1];
+	var output = e.parentNode.children[0].children[1];
 
 	// update the value text
-	output.innerText = "" + ui.value + " " + output.getAttribute("units");
-	return e;
+	output.innerText = "" + event.target.value + " " + output.getAttribute("units");
+
+	var module = e;
+	while (module && !module.classList.contains("module"))
+		module = module.parentNode;
+	return module;
 }
 
 function onPlayOscillator(event) {
@@ -441,17 +453,19 @@ function createLiveInput() {
 
 	// after adding sliders, walk up to the module to store the audioNode.
 	module = module.parentNode;
+	var err = function(e) {
+        alert('Error getting audio');
+        console.log(e);
+    };
 
-    var gUM = navigator.getUserMedia ||
-              navigator.webkitGetUserMedia ||
-              navigator.mozGetUserMedia;
-    if (!gUM)
-        return(alert("Error: getUserMedia not supported!"));
-
-    gUM({audio:true}, gotStream.bind(module), function(e) {
-            alert('Error getting audio');
-            console.log(e);
-        });
+    if (navigator.getUserMedia )
+ 	   navigator.getUserMedia({audio:true}, gotStream.bind(module), err );
+      else if (navigator.webkitGetUserMedia )
+ 	   navigator.webkitGetUserMedia({audio:true}, gotStream.bind(module), err );
+      else if (navigator.mozGetUserMedia )
+ 	   navigator.mozGetUserMedia({audio:true}, gotStream.bind(module), err );
+ 	  else
+       return(alert("Error: getUserMedia not supported!"));
 
 	if (this.event)
 		this.event.preventDefault();

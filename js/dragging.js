@@ -6,7 +6,7 @@ dragObj.lastLit = null;
 // like Destination or AudioSourceBuffer.
 
 function skipDefault(event) {
-	if (event.target.tagName != "SELECT")
+	if ((event.target.tagName != "SELECT")&&(event.target.tagName != "INPUT"))
 		event.preventDefault();
 }
 
