@@ -194,7 +194,7 @@ function onPlayOscillator(event) {
 		while (e && !e.classList.contains("module"))
 			e = e.parentNode;
 		if (e && e.audioNode) {
-			e.audioNode.noteOff(0);
+			e.audioNode.stop(0);
 			e.audioNode = null;
 		}
 	} else {
@@ -213,7 +213,7 @@ function onPlayOscillator(event) {
 				e.outputConnections.forEach(function(connection){  
 				    oscNode.connect( connection.destination.audioNode ); });
 			}
-			oscNode.noteOn(0);
+			oscNode.start(0);
 		}
 	}
 }
@@ -306,7 +306,7 @@ function stopABSource( playButton ) {
 		e.stopTimer = 0;
 	}
 	if ( e.audioNode )
-		e.audioNode.noteOff(0);
+		e.audioNode.stop(0);
 
 }
 
@@ -327,7 +327,7 @@ function onPlayABSource(event) {
 
 		// if there's already a note playing, cut it off.
 		if (e.audioNode) {
-			e.audioNode.noteOff(0);
+			e.audioNode.stop(0);
 			e.audioNode.disconnect();
 			e.audioNode = null;
 		}
@@ -341,7 +341,7 @@ function onPlayABSource(event) {
 			e.outputConnections.forEach(function(connection){  
 			                      n.connect( connection.destination.audioNode ); });
 		}
-		e.audioNode.noteOn(0);
+		e.audioNode.start(0);
 		var delay = Math.floor( e.buffer.duration * 1000) + 1;
 		if (!e.loop)
 			e.stopTimer = window.setTimeout( stopABSource, delay, playButton );
@@ -354,7 +354,7 @@ function hitplay(e) {
 
 	// if there's already a note playing, cut it off.
 	if (e.audioNode)
-		e.audioNode.noteOff(0);
+		e.audioNode.stop(0);
 		
 	//TODO: disconnect the audioNode before releasing it
 	
@@ -369,11 +369,11 @@ function hitplay(e) {
 	}
 
   	e.audioNode.buffer = e.buffer;
-	e.audioNode.noteOn(0);
+	e.audioNode.start(0);
 }
 
 function hitstop(e) {
-	e.target.parentNode.audioNode.noteOff(0);
+	e.target.parentNode.audioNode.stop(0);
 	e.target.parentNode.audioNode = null;
 }
 */
@@ -434,7 +434,7 @@ function createGain() {
 	// after adding sliders, walk up to the module to store the audioNode.
 	module = module.parentNode;
 
-	var gainNode = audioContext.createGainNode();
+	var gainNode = audioContext.createGain();
 	gainNode.gain.value = 1.0;
 	module.audioNode = gainNode;
 
@@ -478,7 +478,7 @@ function createDelay() {
 	// after adding sliders, walk up to the module to store the audioNode.
 	module = module.parentNode;
 
-	var delayNode = audioContext.createDelayNode();
+	var delayNode = audioContext.createDelay();
 	delayNode.delayTime.value = 0.2;
 	module.audioNode = delayNode;
 
@@ -886,11 +886,7 @@ function init() {
     try {
       audioContext = new AudioContext();
     } catch(e) {
-      try {
-        audioContext = new webkitAudioContext();
-      } catch(e) {
-        alert('Web Audio API is not supported in this browser.');
-      }
+      alert('The Web Audio API is apparently not supported in this browser.');
     }
 
 	initDragDropOfAudioFiles();	// set up page as a drop site for audio files
