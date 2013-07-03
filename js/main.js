@@ -176,7 +176,7 @@ function updateSlider(event) {
 	var output = e.parentNode.children[0].children[1];
 
 	// update the value text
-	output.innerText = "" + event.target.value + " " + output.getAttribute("units");
+	output.innerHTML = "" + event.target.value + " " + output.getAttribute("units");
 
 	var module = e;
 	while (module && !module.classList.contains("module"))
@@ -273,6 +273,14 @@ function switchAudioBuffer(event) {
 	}
 }
 
+var filterTypes = [ "lowpass",
+  "highpass",
+  "bandpass",
+  "lowshelf",
+  "highshelf",
+  "peaking",
+  "notch",
+  "allpass" ];
 
 function switchFilterTypes(event) {
 	var select = event.target;
@@ -282,7 +290,7 @@ function switchFilterTypes(event) {
 	while (e && !e.audioNode)
 		e = e.parentNode;
 	if (e) {
-		e.audioNode.type = fType;
+		e.audioNode.type = filterTypes[fType];
 		if (fType>2 && fType<6) {
 			e.children[0].children[3].classList.remove("disabled");
 		} else {
@@ -341,7 +349,7 @@ function onPlayABSource(event) {
 			e.outputConnections.forEach(function(connection){  
 			                      n.connect( connection.destination.audioNode ); });
 		}
-		e.audioNode.start(0);
+		e.audioNode.start(audioContext.currentTime);
 		var delay = Math.floor( e.buffer.duration * 1000) + 1;
 		if (!e.loop)
 			e.stopTimer = window.setTimeout( stopABSource, delay, playButton );

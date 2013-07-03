@@ -384,7 +384,7 @@ function stopDraggingConnector(event) {
 
 	dragObj.elNode.className = dragObj.elNode.unlitClassname;
 	
-	var toElem = event.toElement;
+	var toElem = event.toElement || event.target;
 
     // If this is a text node, use its parent element.
     if (toElem.nodeType == 3)
