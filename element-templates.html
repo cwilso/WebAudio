@@ -1,20 +1,287 @@
-<element name="my-element">
-  <section>
-    <span style="color:red">I'm a my-element!</span>
-  </section>
-  <footer>nothing to see here</footer>
+
+<polymer-element name="biquad-filter">
+  <template>
+    <link rel="stylesheet" href="css/main.css" />
+    <div class="module biquad-filter has-footer">
+      <div class="content">
+        <h6 class="module-title">Biquad Filter</h6>  
+        <div class="slider-info">
+          <label class="label" for="frequency">Frequency</label>
+          <div class="value">{{frequency}}Hz</div>
+        </div>
+        <input class="slider" id="frequency" type="range" min=0 max=10000 value="{{frequency}}">
+
+        <div class="slider-info">
+          <label class="label" for="Q">Q</label>
+          <div class="value">{{Q}}</div>
+        </div>
+        <input class="slider" id="Q" type="range" min=0 max=100 value="{{Q}}">
+
+        <div class="slider-info">
+          <label class="label" for="gain">Gain</label>
+          <div class="value">{{gain}}</div>
+        </div>
+        <input class="slider" id="gain" type="range" min=0 max=1 value="{{gain}}">
+      </div>
+
+      <div class="node node-input"><span class='node-button'>&nbsp;</span></div>
+      <div class="node node-output"><span class='node-button'>&nbsp;</span></div>
+      <a href="#" class="close" onclick="close"></a>
+
+      <footer>
+        <select class="filter-type" value="{{type}}">
+          <option>lowpass</option>
+          <option>highpass</option>
+          <option>bandpass</option>
+          <option>lowshelf</option>
+          <option>highshelf</option>
+          <option>peaking</option>
+          <option>notch</option>
+          <option>allpass</option>
+        </select>
+      </footer>
+    </div>
+<!--
+
+          </div>
+          <div class="control-group">
+            <div class="slider-info">
+              <span class="label">Q</span>
+              <span class="value">34</span>
+            </div>
+            <div class="slider"></div>
+          </div>
+          <div class="control-group last">
+            <div class="slider-info">
+              <span class="label">Gain</span>
+              <span class="value">11</span>
+            </div>
+            <div class="slider"></div>
+          </div>
+        </div>
+        <footer>
+          <select>
+            <option>High shelf</option>
+          </select>
+        </footer>
+        <div class="node node-input"><span>&nbsp;</span></div>
+        <div class="node node-output"><span>&nbsp;</span></div>
+        <a href="#" class="close">x</a>
+      </div>
+-->
+  </template>
   <script>
-    // When <element> is in document, might run in wrong context.
-    // Only do work when this == <element>.
-    if (this !== window) {
-      var section = this.querySelector('section');
-      this.register({
-        prototype: {
-          readyCallback: function() {
-            this.innerHTML = section.innerHTML;
-          }
+    Polymer('biquad-filter', {
+      frequency: "440",
+      nameChanged: function() {
+        if (this.name) {
+          // ensure capitalization
+          this.name = this.name[0].toUpperCase() +  this.name.slice(1);
         }
-     });
-    }
-  </script>
-</element>
+      }
+    });
+</script>
+</polymer-element>
+
+<!--<div style="left:600px; top: 150px;" class="module biquad-filter has-footer">
+        <div class="content">
+          <h6>Biquad Filter</h6>  
+          <div class="control-group">
+            <div class="slider-info">
+              <span class="label">Frequency</span>
+              <span class="value">20,000 HZ</span>
+            </div>
+            <div class="slider"></div>
+          </div>
+          <div class="control-group">
+            <div class="slider-info">
+              <span class="label">Q</span>
+              <span class="value">34</span>
+            </div>
+            <div class="slider"></div>
+          </div>
+          <div class="control-group last">
+            <div class="slider-info">
+              <span class="label">Gain</span>
+              <span class="value">11</span>
+            </div>
+            <div class="slider"></div>
+          </div>
+        </div>
+        <footer>
+          <select>
+            <option>High shelf</option>
+          </select>
+        </footer>
+        <div class="node node-input"><span>&nbsp;</span></div>
+        <div class="node node-output"><span>&nbsp;</span></div>
+        <a href="#" class="close">x</a>
+      </div>
+-->
+      <!-- Convolver -->
+<!--
+      <div style="left:825px; top: 150px;" class="module convolver has-footer">
+        <div class="content">
+          <h6>Convolver</h6>  
+        </div>
+        <footer>
+          <select>
+            <option>hall_reverb.wav</option>
+            <option>audio_file_1.wav</option>
+            <option>audio_file_2.wav</option>
+          </select>
+        </footer>
+        <div class="node node-input"><span>&nbsp;</span></div>
+        <div class="node node-output"><span>&nbsp;</span></div>
+        <a href="#" class="close">x</a>
+      </div>
+-->
+      <!-- Dynamics compressor -->
+<!--
+      <div style="left:300px; top: 450px;" class="module biquad-filter">
+        <div class="content">
+          <h6>Dynamics Compressor</h6>  
+          <div class="control-group">
+            <div class="slider-info">
+              <span class="label">Threshhold</span>
+              <span class="value">20 Db</span>
+            </div>
+            <div class="slider"></div>
+          </div>
+          <div class="control-group">
+            <div class="slider-info">
+              <span class="label">Knee</span>
+              <span class="value">34Db</span>
+            </div>
+            <div class="slider"></div>
+          </div>
+          <div class="control-group">
+            <div class="slider-info">
+              <span class="label">Ratio</span>
+              <span class="value">11</span>
+            </div>
+            <div class="slider"></div>
+          </div>
+          <div class="control-group">
+            <div class="slider-info">
+              <span class="label">Attach</span>
+              <span class="value">0.05</span>
+            </div>
+            <div class="slider"></div>
+          </div>
+          <div class="control-group last">
+            <div class="slider-info">
+              <span class="label">Release</span>
+              <span class="value">6</span>
+            </div>
+            <div class="slider"></div>
+          </div>
+        </div>
+        <div class="node node-input"><span>&nbsp;</span></div>
+        <div class="node node-output"><span>&nbsp;</span></div>
+        <a href="#" class="close">x</a>
+      </div>
+-->
+
+      <!-- Gain -->
+<!--
+      <div style="left:525px; top: 450px;" class="module gain">
+        <div class="content">
+          <h6>Gain</h6> 
+          <div class="control-group last">
+            <div class="slider-info">
+              <span class="label">Gain</span>
+              <span class="value">0.5</span>
+            </div>
+            <div class="slider"></div>
+          </div>
+        </div>
+        <div class="node node-input"><span>&nbsp;</span></div>
+        <div class="node node-output"><span>&nbsp;</span></div>
+        <a href="#" class="close">x</a>
+      </div>
+-->
+      <!-- Oscillator -->
+<!--
+      <div style="left:750px; top: 450px;" class="module oscillator has-footer">
+        <div class="content">
+          <h6>Oscillator</h6> 
+          <div class="control-group">
+            <div class="slider-info">
+              <span class="label">Frequency</span>
+              <span class="value">20,000 HZ</span>
+            </div>
+            <div class="slider"></div>
+          </div>
+          <div class="control-group last">
+            <div class="slider-info">
+              <span class="label">Detune</span>
+              <span class="value">960</span>
+            </div>
+            <div class="slider"></div>
+          </div>
+        </div>
+        <footer>
+          <select>
+            <option>Sine</option>
+            <option>Sawtooth</option>
+            <option>Square</option>
+            <option>WaveTable</option>
+          </select>
+        </footer>
+        <div class="node node-input"><span>&nbsp;</span></div>
+        <div class="node node-output"><span>&nbsp;</span></div>
+        <a href="#" class="close">x</a>
+      </div>
+-->
+      <!-- Delay -->
+<!--
+      <div style="left:50px; top: 450px;" class="module delay">
+        <div class="content">
+          <h6>Delay</h6>  
+          <div class="control-group last">
+            <div class="slider-info">
+              <span class="label">Delay Time</span>
+              <span class="value">6.55</span>
+            </div>
+            <div class="slider"></div>
+          </div>
+        </div>
+        <div class="node node-input"><span>&nbsp;</span></div>
+        <div class="node node-output"><span>&nbsp;</span></div>
+        <a href="#" class="close">x</a>
+      </div>
+-->
+      <!-- Audio buffer source -->
+<!--
+      <div style="left:50px; top: 150px;" class="module audio-buffer-source has-footer has-loop">
+        <div class="content">
+          <h6>Audio Buffer Source</h6>  
+          <img src="img/ico-play.gif" alt="Audio play icon" />
+        </div>
+        <footer>
+          <div class="loop">
+            <label><input type="checkbox" /> Loop</label>
+          </div>
+          <select>
+            <option>woofer.wav</option>
+          </select>
+        </footer>
+        <div class="node node-input"><span>&nbsp;</span></div>
+        <div class="node node-output"><span>&nbsp;</span></div>
+        <a href="#" class="close">x</a>
+      </div>
+-->
+
+      <!-- Analyser -->
+<!--
+      <div style="left:300px; top: 150px;" class="module analyser">
+        <div class="content">
+          <h6>Analyser</h6> 
+          <img src="img/ico-analyser.gif" alt="Analyzer graph" />
+        </div>
+        <div class="node node-input"><span>&nbsp;</span></div>
+        <div class="node node-output"><span>&nbsp;</span></div>
+        <a href="#" class="close">x</a>
+      </div>
+-->
