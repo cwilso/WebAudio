@@ -12,10 +12,14 @@
 
     <script src="http://cwilso.github.io/AudioContext-MonkeyPatch/AudioContextMonkeyPatch.js"></script>
 
+	<script src="js/polymer.min.js"></script>
 	<script src="js/pointerevents.js"></script>
 	<script src="js/main.js"></script>
 	<script src="js/dragging.js"></script>
 	<script src="js/analyser.js"></script>
+
+    <link rel="import" href="element-templates.html">
+
 	<script>
 	if (window != window.top)
 		document.write("<style>#header {display:none}</style>")
@@ -56,210 +60,7 @@
 			</ul>
 		</nav>
 		<section id="modules" class="container">
-			<!-- Biquad filter -->
-<!--
-			<div style="left:600px; top: 150px;" class="module biquad-filter has-footer">
-				<div class="content">
-					<h6>Biquad Filter</h6>	
-					<div class="control-group">
-						<div class="slider-info">
-							<span class="label">Frequency</span>
-							<span class="value">20,000 HZ</span>
-						</div>
-						<div class="slider"></div>
-					</div>
-					<div class="control-group">
-						<div class="slider-info">
-							<span class="label">Q</span>
-							<span class="value">34</span>
-						</div>
-						<div class="slider"></div>
-					</div>
-					<div class="control-group last">
-						<div class="slider-info">
-							<span class="label">Gain</span>
-							<span class="value">11</span>
-						</div>
-						<div class="slider"></div>
-					</div>
-				</div>
-				<footer>
-					<select>
-						<option>High shelf</option>
-					</select>
-				</footer>
-				<div class="node node-input"><span>&nbsp;</span></div>
-				<div class="node node-output"><span>&nbsp;</span></div>
-				<a href="#" class="close">x</a>
-			</div>
--->
-			<!-- Convolver -->
-<!--
-			<div style="left:825px; top: 150px;" class="module convolver has-footer">
-				<div class="content">
-					<h6>Convolver</h6>	
-				</div>
-				<footer>
-					<select>
-						<option>hall_reverb.wav</option>
-						<option>audio_file_1.wav</option>
-						<option>audio_file_2.wav</option>
-					</select>
-				</footer>
-				<div class="node node-input"><span>&nbsp;</span></div>
-				<div class="node node-output"><span>&nbsp;</span></div>
-				<a href="#" class="close">x</a>
-			</div>
--->
-			<!-- Dynamics compressor -->
-<!--
-			<div style="left:300px; top: 450px;" class="module biquad-filter">
-				<div class="content">
-					<h6>Dynamics Compressor</h6>	
-					<div class="control-group">
-						<div class="slider-info">
-							<span class="label">Threshhold</span>
-							<span class="value">20 Db</span>
-						</div>
-						<div class="slider"></div>
-					</div>
-					<div class="control-group">
-						<div class="slider-info">
-							<span class="label">Knee</span>
-							<span class="value">34Db</span>
-						</div>
-						<div class="slider"></div>
-					</div>
-					<div class="control-group">
-						<div class="slider-info">
-							<span class="label">Ratio</span>
-							<span class="value">11</span>
-						</div>
-						<div class="slider"></div>
-					</div>
-					<div class="control-group">
-						<div class="slider-info">
-							<span class="label">Attach</span>
-							<span class="value">0.05</span>
-						</div>
-						<div class="slider"></div>
-					</div>
-					<div class="control-group last">
-						<div class="slider-info">
-							<span class="label">Release</span>
-							<span class="value">6</span>
-						</div>
-						<div class="slider"></div>
-					</div>
-				</div>
-				<div class="node node-input"><span>&nbsp;</span></div>
-				<div class="node node-output"><span>&nbsp;</span></div>
-				<a href="#" class="close">x</a>
-			</div>
--->
-
-			<!-- Gain -->
-<!--
-			<div style="left:525px; top: 450px;" class="module gain">
-				<div class="content">
-					<h6>Gain</h6>	
-					<div class="control-group last">
-						<div class="slider-info">
-							<span class="label">Gain</span>
-							<span class="value">0.5</span>
-						</div>
-						<div class="slider"></div>
-					</div>
-				</div>
-				<div class="node node-input"><span>&nbsp;</span></div>
-				<div class="node node-output"><span>&nbsp;</span></div>
-				<a href="#" class="close">x</a>
-			</div>
--->
-			<!-- Oscillator -->
-<!--
-			<div style="left:750px; top: 450px;" class="module oscillator has-footer">
-				<div class="content">
-					<h6>Oscillator</h6>	
-					<div class="control-group">
-						<div class="slider-info">
-							<span class="label">Frequency</span>
-							<span class="value">20,000 HZ</span>
-						</div>
-						<div class="slider"></div>
-					</div>
-					<div class="control-group last">
-						<div class="slider-info">
-							<span class="label">Detune</span>
-							<span class="value">960</span>
-						</div>
-						<div class="slider"></div>
-					</div>
-				</div>
-				<footer>
-					<select>
-						<option>Sine</option>
-						<option>Sawtooth</option>
-						<option>Square</option>
-						<option>WaveTable</option>
-					</select>
-				</footer>
-				<div class="node node-input"><span>&nbsp;</span></div>
-				<div class="node node-output"><span>&nbsp;</span></div>
-				<a href="#" class="close">x</a>
-			</div>
--->
-			<!-- Delay -->
-<!--
-			<div style="left:50px; top: 450px;" class="module delay">
-				<div class="content">
-					<h6>Delay</h6>	
-					<div class="control-group last">
-						<div class="slider-info">
-							<span class="label">Delay Time</span>
-							<span class="value">6.55</span>
-						</div>
-						<div class="slider"></div>
-					</div>
-				</div>
-				<div class="node node-input"><span>&nbsp;</span></div>
-				<div class="node node-output"><span>&nbsp;</span></div>
-				<a href="#" class="close">x</a>
-			</div>
--->
-			<!-- Audio buffer source -->
-<!--
-			<div style="left:50px; top: 150px;" class="module audio-buffer-source has-footer has-loop">
-				<div class="content">
-					<h6>Audio Buffer Source</h6>	
-					<img src="img/ico-play.gif" alt="Audio play icon" />
-				</div>
-				<footer>
-					<div class="loop">
-						<label><input type="checkbox" /> Loop</label>
-					</div>
-					<select>
-						<option>woofer.wav</option>
-					</select>
-				</footer>
-				<div class="node node-input"><span>&nbsp;</span></div>
-				<div class="node node-output"><span>&nbsp;</span></div>
-				<a href="#" class="close">x</a>
-			</div>
--->
-
-			<!-- Analyser -->
-<!--
-			<div style="left:300px; top: 150px;" class="module analyser">
-				<div class="content">
-					<h6>Analyser</h6>	
-					<img src="img/ico-analyser.gif" alt="Analyzer graph" />
-				</div>
-				<div class="node node-input"><span>&nbsp;</span></div>
-				<div class="node node-output"><span>&nbsp;</span></div>
-				<a href="#" class="close">x</a>
-			</div>
--->
+<!--    <my-element></my-element> -->
 
 		</section>
 	<div class="link">Code available on <a href="https://github.com/cwilso/WebAudio">GitHub</a>.</div>

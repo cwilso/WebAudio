@@ -373,7 +373,7 @@ body {
 /* Slider */
 .slider-info {
 	font-size: .625em; /* 10 / 16 */
-	margin-bottom: 0 0 1em;
+	margin-bottom: 1em;
 	overflow: hidden;
 	padding-bottom: .4em;
 	position: relative;
@@ -464,6 +464,5 @@ input[type="range"]::-webkit-slider-thumb {
 	-webkit-border-radius: 40px;
 	-moz-border-radius: 40px;
 	border-radius: 40px;
-	abackground-image: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ebf1f6), color-stop(50%,#abd3ee), color-stop(51%,#89c3eb), color-stop(100%,#d5ebfb));
 	background-image: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#ff7373), color-stop(50%,#a00000), color-stop(51%,#700000), color-stop(100%,#ff7373));
 }
