@@ -189,7 +189,7 @@ body {
 /*	---------------------------------------------------------------------------
  *	:: Output
  *	-------------------------------------------------------------------------*/
-#output {
+#destinationoutput {
 	background:
 		url('../img/ico-speaker.png') 50% 50% no-repeat,
 		url('../img/output-bkg.gif') 0 0 repeat;
@@ -204,7 +204,7 @@ body {
 	width: 105px;
 	z-index: 100;
 }
-#output .node {
+#destinationoutput .node {
 	left: -18px;
 	margin-top: -11px;
 	position: absolute;

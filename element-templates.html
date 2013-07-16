@@ -2,8 +2,8 @@
 <polymer-element name="biquad-filter">
   <template>
     <link rel="stylesheet" href="css/main.css" />
-    <div class="module biquad-filter has-footer">
-      <div class="content">
+    <div id="root" class="module biquad-filter has-footer">
+      <div id="content" class="content">
         <h6 class="module-title">Biquad Filter</h6>  
         <div class="slider-info">
           <label class="label" for="frequency">Frequency</label>
@@ -24,9 +24,9 @@
         <input class="slider" id="gain" type="range" min=0 max=1 value="{{gain}}">
       </div>
 
-      <div class="node node-input"><span class='node-button'>&nbsp;</span></div>
-      <div class="node node-output"><span class='node-button'>&nbsp;</span></div>
-      <a href="#" class="close" onclick="close"></a>
+      <div id="input" class="node node-input"><span class='node-button'>&nbsp;</span></div>
+      <div id="output" class="node node-output"><span class='node-button'>&nbsp;</span></div>
+      <a href="#" id="close" class="close"></a>
 
       <footer>
         <select class="filter-type" value="{{type}}">
@@ -41,83 +41,93 @@
         </select>
       </footer>
     </div>
-<!--
-
-          </div>
-          <div class="control-group">
-            <div class="slider-info">
-              <span class="label">Q</span>
-              <span class="value">34</span>
-            </div>
-            <div class="slider"></div>
-          </div>
-          <div class="control-group last">
-            <div class="slider-info">
-              <span class="label">Gain</span>
-              <span class="value">11</span>
-            </div>
-            <div class="slider"></div>
-          </div>
-        </div>
-        <footer>
-          <select>
-            <option>High shelf</option>
-          </select>
-        </footer>
-        <div class="node node-input"><span>&nbsp;</span></div>
-        <div class="node node-output"><span>&nbsp;</span></div>
-        <a href="#" class="close">x</a>
-      </div>
--->
   </template>
   <script>
     Polymer('biquad-filter', {
-      frequency: "440",
-      nameChanged: function() {
-        if (this.name) {
-          // ensure capitalization
-          this.name = this.name[0].toUpperCase() +  this.name.slice(1);
-        }
+      frequency: 440,
+      Q: 1,
+      gain: 1,
+      ready: function() {
+          this.$.root.addEventListener("mousedown", skipDefault,   false);
+          this.$.root.addEventListener( 'pointerdown', startDraggingNode, false );
+
+          this.$.close.onclick = deleteModule;
+          var node = this.$.input;
+          if (node) {
+            node.addEventListener( "mousedown", skipDefault, true );
+            node.addEventListener( 'pointerdown', startDraggingConnector, false );
+            this.$.root.inputs = node;
+          }
+          node = this.$.output;
+          if (node) {
+            node.addEventListener( "mousedown", skipDefault, true );
+            node.addEventListener( 'pointerdown', startDraggingConnector, false );
+            this.$.root.outputs = node;
+          }
+
+          var audioNode = audioContext.createBiquadFilter();
+          audioNode.frequency.value = 440;
+          audioNode.Q.value = 1.0;
+          audioNode.gain.value = 1.0;
+          this.$.root.audioNode = audioNode;
+
+
       }
     });
 </script>
 </polymer-element>
 
-<!--<div style="left:600px; top: 150px;" class="module biquad-filter has-footer">
-        <div class="content">
-          <h6>Biquad Filter</h6>  
-          <div class="control-group">
-            <div class="slider-info">
-              <span class="label">Frequency</span>
-              <span class="value">20,000 HZ</span>
-            </div>
-            <div class="slider"></div>
-          </div>
-          <div class="control-group">
-            <div class="slider-info">
-              <span class="label">Q</span>
-              <span class="value">34</span>
-            </div>
-            <div class="slider"></div>
-          </div>
-          <div class="control-group last">
-            <div class="slider-info">
-              <span class="label">Gain</span>
-              <span class="value">11</span>
-            </div>
-            <div class="slider"></div>
-          </div>
-        </div>
-        <footer>
-          <select>
-            <option>High shelf</option>
-          </select>
-        </footer>
-        <div class="node node-input"><span>&nbsp;</span></div>
-        <div class="node node-output"><span>&nbsp;</span></div>
-        <a href="#" class="close">x</a>
+
+<polymer-element name="audiobuffer-source">
+  <template>
+    <link rel="stylesheet" href="css/main.css" />
+    <div id="root" class="module audiobuffer-source has-footer has-loop">
+      <div id="content" class="content">
+        <h6 class="module-title">Audio Buffer Source</h6>  
+        <img src="img/ico-play.gif" alt="play" id="playbutton"/>
       </div>
--->
+      <div id="output" class="node node-output"><span class='node-button'>&nbsp;</span></div>
+      <a href="#" id="close" class="close"></a>
+      <footer>
+        <div class="loop">
+          <label><input type="checkbox" style="font-size: 6px" id="loop"/> Loop</label>
+        </div>
+        <select id="sound" class="ab-source">
+          <option>glass-hit.ogg</option>
+          <option>drums.ogg</option>
+          <option>noise.ogg</option>
+          <option>voice.ogg</option>
+          <option>bass.ogg</option>
+          <option>guitar.ogg</option>
+        </select>
+      </footer>
+    </div>
+  </template>
+  <script>
+    Polymer('audiobuffer-source', {
+      gain: 1,
+      ready: function() {
+          this.$.root.addEventListener("mousedown", skipDefault,   false);
+          this.$.root.addEventListener( 'pointerdown', startDraggingNode, false );
+
+          this.$.playbutton.onclick = onPlayABSource;
+          node = this.$.output;
+          if (node) {
+            node.addEventListener( "mousedown", skipDefault, true );
+            node.addEventListener( 'pointerdown', startDraggingConnector, false );
+            this.$.root.outputs = node;
+          }
+
+          this.$.loop.onchange = onToggleLoop;
+
+          this.$.sound.onchange = switchAudioBuffer;
+
+
+      }
+    });
+</script>
+</polymer-element>
+<!--
       <!-- Convolver -->
 <!--
       <div style="left:825px; top: 150px;" class="module convolver has-footer">

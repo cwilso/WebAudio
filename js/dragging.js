@@ -44,18 +44,16 @@ function startDraggingNode(event) {
   	dragObj.elStartLeft  = parseInt(dragObj.elNode.style.left, 10);
   	dragObj.elStartTop   = parseInt(dragObj.elNode.style.top,  10);
 
-  	if (isNaN(dragObj.elStartLeft)) dragObj.elStartLeft = 0;
-  	if (isNaN(dragObj.elStartTop))  dragObj.elStartTop  = 0;
+  	if (isNaN(dragObj.elStartLeft)) 
+  		dragObj.elStartLeft = dragObj.elNode.offsetLeft;
+  	if (isNaN(dragObj.elStartTop))  dragObj.elStartTop  = dragObj.elNode.offsetTop;
 
   	// Update element's z-index.
 	dragObj.elNode.style.zIndex = ++dragObj.zIndex;
 
-  	// Capture mousemove and mouseup events on the page.
-//    document.addEventListener("mousemove", skipDefault,   true);
-//    document.addEventListener("mouseup",   stopDraggingNode, 	true);
+  	// Capture pointer events on the page.
 	document.addEventListener( 'pointermove', whileDraggingNode, true );
 	document.addEventListener( 'pointerup', stopDraggingNode, true );
-	document.addEventListener( 'pointerleave', stopDraggingNode, true );
     event.preventDefault();
 }
 
@@ -114,17 +112,15 @@ function whileDraggingNode(event) {
 
 
 function stopDraggingNode(event) {
-  // Stop capturing mousemove and mouseup events.
-//    document.removeEventListener("mousemove", whileDraggingNode,   true);
-//    document.removeEventListener("mouseup",   stopDraggingNode, true);
+	// Stop capturing pointer events.
 	document.removeEventListener( 'pointermove', whileDraggingNode, true );
 	document.removeEventListener( 'pointerup', stopDraggingNode, true );
-	document.removeEventListener( 'pointerleave', stopDraggingNode, true );
 }
 
 // Connector Dragging functions - these are used for dragging the connectors 
 // between Audio nodes
 function startDraggingConnector(event) {
+	console.log("start dragging connector");
  	var el;
   	var x, y;
 
@@ -179,12 +175,13 @@ function startDraggingConnector(event) {
 //    document.addEventListener("mouseup",   stopDraggingConnector, 	true);
 	document.addEventListener( 'pointermove', whileDraggingConnector, true );
 	document.addEventListener( 'pointerup', stopDraggingConnector, true );
-	document.addEventListener( 'pointerleave', stopDraggingConnector, true );
+//	document.addEventListener( 'pointerleave', stopDraggingConnector, true );
     event.preventDefault();
 	event.stopPropagation();
 }
 
 function whileDraggingConnector(event) {
+	console.log("while dragging connector");
 	var x, y;
 	var toElem = event.toElement;
 
@@ -370,6 +367,7 @@ function disconnectNode( nodeElement ) {
 }
 
 function stopDraggingConnector(event) {
+	console.log("stop dragging connector");
   	// Stop capturing mousemove and mouseup events.
 //    document.removeEventListener("mousemove", whileDraggingConnector,   true);
 //    document.removeEventListener("mouseup",   stopDraggingConnector, true);

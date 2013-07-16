@@ -343,50 +343,18 @@ function onPlayABSource(event) {
 		// create a new BufferSource, set it to the buffer and connect it.
 		var n = e.audioNode = audioContext.createBufferSource();
 		n.loop = e.loop;
-		n.buffer = e.buffer;
+		n.buffer = e.buffer ? e.buffer : glassBuffer;
 	
 		if (e.outputConnections) {
 			e.outputConnections.forEach(function(connection){  
 			                      n.connect( connection.destination.audioNode ); });
 		}
 		e.audioNode.start(audioContext.currentTime);
-		var delay = Math.floor( e.buffer.duration * 1000) + 1;
+		var delay = Math.floor( n.buffer.duration * 1000) + 1;
 		if (!e.loop)
 			e.stopTimer = window.setTimeout( stopABSource, delay, playButton );
 	}
 }
-
-/* historic code, need to poach connection stuff
-function hitplay(e) {
-  	e = e.target.parentNode; // the node element, not the play button.
-
-	// if there's already a note playing, cut it off.
-	if (e.audioNode)
-		e.audioNode.stop(0);
-		
-	//TODO: disconnect the audioNode before releasing it
-	
-	// create a new BufferSource, set it to the buffer and connect it.
-	var n = e.audioNode = audioContext.createBufferSource();
-	n.loop = e.getElementsByTagName("input")[0].checked;
-	n.gain.value = e.gain;
-	
-	if (e.outputConnections) {
-		e.outputConnections.forEach(function(connection){  
-		                      n.connect( connection.destination.audioNode ); });
-	}
-
-  	e.audioNode.buffer = e.buffer;
-	e.audioNode.start(0);
-}
-
-function hitstop(e) {
-	e.target.parentNode.audioNode.stop(0);
-	e.target.parentNode.audioNode = null;
-}
-*/
-
-
 
 function createOscillator() {
 	var osc = createNewModule( "oscillator", false, true );
@@ -902,7 +870,7 @@ function init() {
 	startLoadingSounds();
 
 	// create the one-and-only destination node for the context
-	var dest = document.getElementById("output");
+	var dest = document.getElementById("destinationoutput");
 	dest.audioNode = audioContext.destination;
 //	stringifyAudio();
 
