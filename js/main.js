@@ -238,21 +238,23 @@ function onToggleNormalize(event) {
 		e.audioNode.normalize = checkbox.checked;
 }
 
+var oscTypes = ["sine","square","sawtooth","triangle"];
+
 function switchOscillatorTypes(event) {
 	var select = event.target;
 
 	var e = select.parentNode;
-	while (e && !e.audioNode)
+	while (e && !e.classList.contains("module"))
 		e = e.parentNode;
 	if (e) {
 		// TODO: wavetable!
 
 		//cache the type
-		e.oscillatorType = select.selectedIndex;
+		e.oscillatorType = oscTypes[select.selectedIndex];
 
 		// if we have a playing oscillator, go ahead and switch it live
 		if (e.audioNode)
-			e.audioNode.type = select.selectedIndex;
+			e.audioNode.type = oscTypes[select.selectedIndex];
 	}
 }
 
@@ -429,7 +431,7 @@ function createOscillator() {
 	// Cache default values on node element
 	osc.oscillatorFrequency = 440;
 	osc.oscillatorDetune = 0;
-	osc.oscillatorType = 0;			// SINE
+	osc.oscillatorType = "sine";			// SINE
 
 	if (this.event)
 		this.event.preventDefault();
