@@ -33,8 +33,8 @@ function createNewModule( nodeType, input, output ) {
 		tempy = 100;
 
 	e.setAttribute("audioNodeType", nodeType );
-    e.addEventListener("mousedown", skipDefault,   false);
-	e.addEventListener( 'pointerdown', startDraggingNode, false );
+    e.addEventListener("mousedown", startDraggingNode,   false);
+//	e.addEventListener( 'pointerdown', startDraggingNode, false );
 	var content = document.createElement("div");
 	content.className="content";
 	e.appendChild(content);
@@ -46,8 +46,8 @@ function createNewModule( nodeType, input, output ) {
 	if (input) {
 		var i=document.createElement("div");
 		i.className="node node-input ";
-	    i.addEventListener( "mousedown", skipDefault, true );
-		i.addEventListener( 'pointerdown', startDraggingConnector, false );
+	    i.addEventListener( "mousedown", startDraggingConnector, true );
+//		i.addEventListener( 'pointerdown', startDraggingConnector, false );
 		i.innerHTML = "<span class='node-button'>&nbsp;</span>";
 		e.appendChild(i);
 		e.inputs = i;
@@ -56,8 +56,8 @@ function createNewModule( nodeType, input, output ) {
 	if (output) {
 		var i=document.createElement("div");
 		i.className="node node-output";
-	    i.addEventListener( "mousedown", skipDefault, true );
-		i.addEventListener( 'pointerdown', startDraggingConnector, false );
+	    i.addEventListener( "mousedown", startDraggingConnector, true );
+//		i.addEventListener( 'pointerdown', startDraggingConnector, false );
 		i.innerHTML = "<span class='node-button'>&nbsp;</span>";
 		e.appendChild(i);
 		e.outputs = i;
@@ -886,8 +886,8 @@ function startLoadingSounds() {
 function setClickHandler( id, handler ) {
     var el = document.getElementById( id );
     if (el) {
-	    el.addEventListener( "mousedown", skipDefault, true );
-		el.addEventListener( "pointerdown", handler, false );
+	    el.addEventListener( "mousedown", handler, true );
+//		el.addEventListener( "pointerdown", handler, false );
 	}
 }
 
