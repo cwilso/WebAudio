@@ -468,12 +468,20 @@ function createLiveInput() {
         console.log(e);
     };
 
+    navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
     if (navigator.getUserMedia )
- 	   navigator.getUserMedia({audio:true}, gotStream.bind(module), err );
-      else if (navigator.webkitGetUserMedia )
- 	   navigator.webkitGetUserMedia({audio:true}, gotStream.bind(module), err );
-      else if (navigator.mozGetUserMedia )
- 	   navigator.mozGetUserMedia({audio:true}, gotStream.bind(module), err );
+ 	   navigator.getUserMedia(
+ 	   {
+            "audio": {
+                "mandatory": {
+                    "googEchoCancellation": "false",
+                    "googAutoGainControl": "false",
+                    "googNoiseSuppression": "false",
+                    "googHighpassFilter": "false"
+                },
+                "optional": []
+            },
+        }, gotStream.bind(module), err );
  	  else
        return(alert("Error: getUserMedia not supported!"));
 
