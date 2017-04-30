@@ -2,7 +2,7 @@ Web Audio Playground
 ==========
 
 This is the source code for the
-[Web Audio Playground](http://webaudioplayground.appspot.com/)
+[Web Audio Playground](https://webaudioplayground.appspot.com/)
 application.
 
 ## Installation ##
